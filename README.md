@@ -86,7 +86,7 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [buymecoffee]: https://www.buymeacoffee.com/tcarwash
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
 [commits-shield]: https://img.shields.io/github/commit-activity/y/tcarwash/noaa_space_weather.svg?style=for-the-badge
-[commits]: https://github.com/tcarwash/noaa_space_weather/commits/main
+[commits]: https://github.com/tcarwash/home-assistant_noaa-space-weather/commits/main
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [discord]: https://discord.gg/Qa5fW2R
@@ -99,5 +99,5 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [pre-commit]: https://github.com/pre-commit/pre-commit
 [pre-commit-shield]: https://img.shields.io/badge/pre--commit-enabled-brightgreen?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/tcarwash/noaa_space_weather.svg?style=for-the-badge
-[releases]: https://github.com/tcarwash/noaa_space_weather/releases
+[releases]: https://github.com/tcarwash/home-assistant_noaa-space-weather/releases
 [user_profile]: https://github.com/tcarwash
