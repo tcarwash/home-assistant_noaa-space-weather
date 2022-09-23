@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Hvis du trenger hjep til konfigurasjon ta en titt her: https://github.com/tcarwash/noaa_space_weather",
+        "description": "Hvis du trenger hjep til konfigurasjon ta en titt her: https://github.com/tcarwash/noaa_space_weather"
       }
     },
     "error": {
@@ -16,7 +16,7 @@
     "step": {
       "user": {
         "data": {
-          "sensor": "Sensor aktivert",
+          "sensor": "Sensor aktivert"
         }
       }
     }
