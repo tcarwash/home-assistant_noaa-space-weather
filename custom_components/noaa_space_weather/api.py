@@ -21,4 +21,6 @@ class NoaaSpaceWeatherApiClient:
 
     async def async_get_data(self) -> dict:
         """Get data from the API."""
-        return await self.swpc.get_standard()
+        data = await self.swpc.get_standard()
+
+        return data

@@ -4,12 +4,12 @@
   "documentation": "https://github.com/tcarwash/noaa_space_weather",
   "issue_tracker": "https://github.com/tcarwash/noaa_space_weather/issues",
   "dependencies": [],
-  "config_flow": false,
+  "config_flow": true,
   "codeowners": [
     "@tcarwash"
   ],
   "requirements": [
     "swpclib>=3.0.0"
   ],
-  "version": "0.0.1"
+  "version": "0.0.2"
 }
