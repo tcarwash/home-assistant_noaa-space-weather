@@ -1,4 +1,4 @@
-"""Config flow to configure the Sun integration."""
+"""Config flow to configure the NOAA Space Weather integration."""
 from __future__ import annotations
 
 from typing import Any

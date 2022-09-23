@@ -2,12 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "NOAA Space Weather",
         "description": "Hvis du trenger hjep til konfigurasjon ta en titt her: https://github.com/tcarwash/noaa_space_weather",
-        "data": {
-          "username": "Brukernavn",
-          "password": "Passord"
-        }
       }
     },
     "error": {
@@ -21,9 +16,7 @@
     "step": {
       "user": {
         "data": {
-          "binary_sensor": "Binær sensor aktivert",
           "sensor": "Sensor aktivert",
-          "switch": "Bryter aktivert"
         }
       }
     }
