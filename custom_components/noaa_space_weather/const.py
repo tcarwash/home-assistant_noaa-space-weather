@@ -9,7 +9,7 @@ ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
 ISSUE_URL = "https://github.com/tcarwash/noaa_space_weather/issues"
 
 # Icons
-ICON = "mdi:format-quote-close"
+ICON = "mdi:weather-sunny"
 
 # Device classes
 # BINARY_SENSOR_DEVICE_CLASS = "connectivity"
