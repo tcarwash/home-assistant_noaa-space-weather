@@ -22,12 +22,10 @@ PLATFORMS = [SENSOR]
 
 
 # Configuration and options
-CONF_ENABLED = "disabled"
-CONF_USERNAME = "username"
-CONF_PASSWORD = "password"
+CONF_ENABLED = "enabled"
 
 # Defaults
-DEFAULT_NAME = DOMAIN
+DEFAULT_NAME = "NOAA Space Weather"
 
 
 STARTUP_MESSAGE = f"""

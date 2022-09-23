@@ -17,8 +17,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .api import NoaaSpaceWeatherApiClient
-from .const import CONF_PASSWORD
-from .const import CONF_USERNAME
 from .const import DOMAIN
 from .const import PLATFORMS
 from .const import STARTUP_MESSAGE
@@ -38,9 +36,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     if hass.data.get(DOMAIN) is None:
         hass.data.setdefault(DOMAIN, {})
         _LOGGER.info(STARTUP_MESSAGE)
-
-    username = entry.data.get(CONF_USERNAME)
-    password = entry.data.get(CONF_PASSWORD)
 
     session = async_get_clientsession(hass)
     client = NoaaSpaceWeatherApiClient(session)
