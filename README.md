@@ -14,16 +14,23 @@
 [![Discord][discord-shield]][discord]
 [![Community Forum][forum-shield]][forum]
 
-**TO BE REMOVED: If you need help, as a developer, to use this custom component tempalte,
-please look at the [User Guide in the Cookiecutter documentation](https://cookiecutter-homeassistant-custom-component.readthedocs.io/en/stable/quickstart.html)**
+A (non-official) home assistant integration for the NOAA Space Weather Prediction Center API.
+
+*Neither this integration nor it's developer have any affiliation with NOAA.*
 
 **This component will set up the following platforms.**
 
 | Platform        | Description                                                               |
 | --------------- | ------------------------------------------------------------------------- |
-| `binary_sensor` | Show something `True` or `False`.                                         |
 | `sensor`        | Show info from NOAA Space Weather API. |
-| `switch`        | Switch something `True` or `False`.                                       |
+
+**These sensors are currently available**
+| Platform                                  | Description                                                               |
+| ----------------------------------------- | ---------------------------------------------- |
+| `sensor.solar_flux_index`                 | Current Solar Flux Index.                      |
+| `sensor.planetary_k_index`                | Current Planetary K-Index.                     |
+| `sensor.x_class_1_day_probability`        | Probability of an X-Class flare within one day.|
+| `sensor.m_class_1_day_probability`        | Probability of an M-Class flare within one day.|
 
 ![example][exampleimg]
 
