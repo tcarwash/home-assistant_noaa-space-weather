@@ -4,6 +4,7 @@
   "documentation": "https://github.com/tcarwash/noaa_space_weather",
   "issue_tracker": "https://github.com/tcarwash/noaa_space_weather/issues",
   "dependencies": [],
+  "iot_class": "cloud_polling",
   "config_flow": true,
   "codeowners": [
     "@tcarwash"
