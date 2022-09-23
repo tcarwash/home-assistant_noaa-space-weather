@@ -1,0 +1,15 @@
+{
+  "domain": "noaa_space_weather",
+  "name": "NOAA Space Weather",
+  "documentation": "https://github.com/tcarwash/noaa_space_weather",
+  "issue_tracker": "https://github.com/tcarwash/noaa_space_weather/issues",
+  "dependencies": [],
+  "config_flow": false,
+  "codeowners": [
+    "@tcarwash"
+  ],
+  "requirements": [
+    "swpclib>=3.0.0"
+  ],
+  "version": "0.0.1"
+}

@@ -1,0 +1,10 @@
+{
+  "_template": "cookiecutter-homeassistant-custom-component",
+  "class_name_prefix": "NoaaSpaceWeather",
+  "domain_name": "noaa_space_weather",
+  "friendly_name": "NOAA Space Weather",
+  "github_user": "tcarwash",
+  "project_name": "noaa_space_weather",
+  "test_suite": "yes",
+  "version": "0.0.1"
+}
