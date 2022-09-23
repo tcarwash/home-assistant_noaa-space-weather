@@ -37,14 +37,16 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
     assert await async_setup_entry(hass, config_entry)
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
-        type(hass.data[DOMAIN][config_entry.entry_id]) == NoaaSpaceWeatherDataUpdateCoordinator
+        type(hass.data[DOMAIN][config_entry.entry_id])
+        == NoaaSpaceWeatherDataUpdateCoordinator
     )
 
     # Reload the entry and assert that the data from above is still there
     assert await async_reload_entry(hass, config_entry) is None
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
-        type(hass.data[DOMAIN][config_entry.entry_id]) == NoaaSpaceWeatherDataUpdateCoordinator
+        type(hass.data[DOMAIN][config_entry.entry_id])
+        == NoaaSpaceWeatherDataUpdateCoordinator
     )
 
     # Unload the entry and verify that the data has been removed
