@@ -13,9 +13,7 @@
 
 | Platform        | Description                         |
 | --------------- | ----------------------------------- |
-| `binary_sensor` | Show something `True` or `False`.   |
 | `sensor`        | Show info from API.                 |
-| `switch`        | Switch something `True` or `False`. |
 
 ![example][exampleimg]
 
