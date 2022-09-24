@@ -24,7 +24,7 @@ _Neither this integration nor it's developer have any affiliation with NOAA._
 | `sensor` | Show info from NOAA Space Weather API. |
 
 **These sensors are currently available**
-| Platform | Description |
+| Sensor | Description |
 | ----------------------------------------- | ---------------------------------------------- |
 | `sensor.solar_flux_index` | Current Solar Flux Index. |
 | `sensor.planetary_k_index` | Current Planetary K-Index. |
