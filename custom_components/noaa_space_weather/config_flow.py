@@ -10,7 +10,7 @@ from .const import DEFAULT_NAME
 from .const import DOMAIN
 
 
-class SunConfigFlow(ConfigFlow, domain=DOMAIN):
+class NoaaSpaceWeatherConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow for NOAA Space Weather."""
 
     VERSION = 1

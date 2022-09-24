@@ -32,6 +32,7 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
     # Set up the entry and assert that the values set during setup are where we expect
     # them to be. Because we have patched the NoaaSpaceWeatherDataUpdateCoordinator.async_get_data
     # call, no code from custom_components/noaa_space_weather/api.py actually runs.
+
     assert await async_setup_entry(hass, config_entry)
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
