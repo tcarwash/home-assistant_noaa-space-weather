@@ -14,6 +14,11 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "data": coordinator.data["sfi_data"]["sfi"],
         },
         {
+            "name": "AI",
+            "desc": "A Index",
+            "data": coordinator.data["a_index_data"]["a_index"],
+        },
+        {
             "name": "KPI",
             "desc": "Planetary K-Index",
             "data": coordinator.data["kp_index_data"]["kp_index"],
@@ -28,13 +33,15 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "name": "x1",
             "icon": "mdi:sun-wireless",
             "desc": "X-Class 1 Day Probability",
-            "data": coordinator.data["probabilities_data"][0]["x_class_1_day"],
+            "data": str(coordinator.data["probabilities_data"][0]["x_class_1_day"])
+            + "%",
         },
         {
             "name": "m1",
             "icon": "mdi:sun-wireless-outline",
             "desc": "M-Class 1 Day Probability",
-            "data": coordinator.data["probabilities_data"][0]["m_class_1_day"],
+            "data": str(coordinator.data["probabilities_data"][0]["m_class_1_day"])
+            + "%",
         },
     ]
     async_add_devices(

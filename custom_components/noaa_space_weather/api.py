@@ -4,9 +4,6 @@ import logging
 import aiohttp
 from swpclib import swpclib
 
-TIMEOUT = 10
-
-
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 HEADERS = {"Content-type": "application/json; charset=UTF-8"}
