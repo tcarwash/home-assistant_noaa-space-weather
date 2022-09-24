@@ -1,8 +1,8 @@
 """Sample API Client."""
 import logging
-from swpclib import swpclib
 
 import aiohttp
+from swpclib import swpclib
 
 TIMEOUT = 10
 

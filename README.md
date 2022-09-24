@@ -16,21 +16,21 @@
 
 A (non-official) home assistant integration for the NOAA Space Weather Prediction Center API.
 
-*Neither this integration nor it's developer have any affiliation with NOAA.*
+_Neither this integration nor it's developer have any affiliation with NOAA._
 
 **This component will set up the following platforms.**
 
-| Platform        | Description                                                               |
-| --------------- | ------------------------------------------------------------------------- |
-| `sensor`        | Show info from NOAA Space Weather API. |
+| Platform | Description                            |
+| -------- | -------------------------------------- |
+| `sensor` | Show info from NOAA Space Weather API. |
 
 **These sensors are currently available**
-| Platform                                  | Description                                                               |
+| Platform | Description |
 | ----------------------------------------- | ---------------------------------------------- |
-| `sensor.solar_flux_index`                 | Current Solar Flux Index.                      |
-| `sensor.planetary_k_index`                | Current Planetary K-Index.                     |
-| `sensor.x_class_1_day_probability`        | Probability of an X-Class flare within one day.|
-| `sensor.m_class_1_day_probability`        | Probability of an M-Class flare within one day.|
+| `sensor.solar_flux_index` | Current Solar Flux Index. |
+| `sensor.planetary_k_index` | Current Planetary K-Index. |
+| `sensor.x_class_1_day_probability` | Probability of an X-Class flare within one day.|
+| `sensor.m_class_1_day_probability` | Probability of an M-Class flare within one day.|
 
 ![example][exampleimg]
 

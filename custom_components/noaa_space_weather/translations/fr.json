@@ -2,12 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "NOAA Space Weather",
-        "description": "Si vous avez besoin d'aide pour la configuration, regardez ici: https://github.com/tcarwash/noaa_space_weather",
-        "data": {
-          "username": "Identifiant",
-          "password": "Mot de Passe"
-        }
+        "description": "Si vous avez besoin d'aide pour la configuration, regardez ici: https://github.com/tcarwash/noaa_space_weather"
       }
     },
     "error": {
@@ -21,9 +16,7 @@
     "step": {
       "user": {
         "data": {
-          "binary_sensor": "Capteur binaire activé",
-          "sensor": "Capteur activé",
-          "switch": "Interrupteur activé"
+          "sensor": "Capteur activé"
         }
       }
     }

@@ -1,4 +1,4 @@
-"""Config flow to configure the Sun integration."""
+"""Config flow to configure the NOAA Space Weather integration."""
 from __future__ import annotations
 
 from typing import Any
@@ -6,7 +6,8 @@ from typing import Any
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.data_entry_flow import FlowResult
 
-from .const import DEFAULT_NAME, DOMAIN
+from .const import DEFAULT_NAME
+from .const import DOMAIN
 
 
 class SunConfigFlow(ConfigFlow, domain=DOMAIN):
