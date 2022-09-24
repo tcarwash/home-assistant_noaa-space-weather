@@ -2,13 +2,16 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: daily
   - package-ecosystem: pip
     directory: "/.github/workflows"
+    target-branch: "dev"
     schedule:
       interval: daily
   - package-ecosystem: pip
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: daily
