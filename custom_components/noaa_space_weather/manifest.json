@@ -7,6 +7,6 @@
   "iot_class": "cloud_polling",
   "config_flow": true,
   "codeowners": ["@tcarwash"],
-  "requirements": ["swpclib>=3.1.0"],
+  "requirements": ["swpclib>=3.1.2"],
   "version": "0.5.0"
 }

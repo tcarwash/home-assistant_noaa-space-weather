@@ -6,7 +6,6 @@ from custom_components.noaa_space_weather.const import (
     DOMAIN,
 )
 from homeassistant import config_entries
-from homeassistant import data_entry_flow
 
 
 # This fixture bypasses the actual setup of the integration
@@ -35,5 +34,4 @@ async def test_successful_config_flow(hass, bypass_get_data):
         DOMAIN, context={"source": config_entries.SOURCE_USER}
     )
 
-    assert result["type"] == data_entry_flow.RESULT_TYPE_CREATE_ENTRY
-    assert result["result"]
+    assert result["handler"] == "noaa_space_weather"

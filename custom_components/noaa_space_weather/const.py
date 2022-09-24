@@ -6,7 +6,7 @@ DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.5.0"
 
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
-ISSUE_URL = "https://github.com/tcarwash/noaa_space_weather/issues"
+ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/ssues/"
 
 # Icons
 ICON = "mdi:weather-sunny"
