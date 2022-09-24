@@ -3,7 +3,7 @@
 NAME = "NOAA Space Weather"
 DOMAIN = "noaa_space_weather"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.0.1"
+VERSION = "0.5.0"
 
 ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
 ISSUE_URL = "https://github.com/tcarwash/noaa_space_weather/issues"
