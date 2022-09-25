@@ -7,11 +7,14 @@ from .entity import NoaaSpaceWeatherEntity
 def sfi_return(coordinator):
     return coordinator.data["sfi_data"]["sfi"]
 
+
 def ai_return(coordinator):
     return coordinator.data["a_index_data"]["a_index"]
 
+
 def kpi_return(coordinator):
     return coordinator.data["kp_index_data"]["kp_index"]
+
 
 def ssn_return(coordinator):
     return (
@@ -19,11 +22,14 @@ def ssn_return(coordinator):
         or coordinator.data["smoothed_ssn_data"]["smoothed_ssn"]
     )
 
+
 def x1_return(coordinator):
     return str(coordinator.data["probabilities_data"][0]["x_class_1_day"]) + "%"
 
+
 def m1_return(coordinator):
     return str(coordinator.data["probabilities_data"][0]["x_class_m_day"]) + "%"
+
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
