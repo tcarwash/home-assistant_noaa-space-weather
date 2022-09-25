@@ -3,10 +3,10 @@
 NAME = "NOAA Space Weather"
 DOMAIN = "noaa_space_weather"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.5.0"
+VERSION = "0.6.1"
 
-ATTRIBUTION = "Data provided by http://jsonplaceholder.typicode.com/"
-ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/ssues/"
+ATTRIBUTION = "Data provided by https://services.swpc.noaa.gov"
+ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/issues/"
 
 # Icons
 ICON = "mdi:weather-sunny"
