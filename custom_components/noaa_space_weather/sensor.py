@@ -4,6 +4,27 @@ from .const import ICON
 from .entity import NoaaSpaceWeatherEntity
 
 
+def sfi_return(coordinator):
+    return coordinator.data["sfi_data"]["sfi"]
+
+def ai_return(coordinator):
+    return coordinator.data["a_index_data"]["a_index"]
+
+def kpi_return(coordinator):
+    return coordinator.data["kp_index_data"]["kp_index"]
+
+def ssn_return(coordinator):
+    return (
+        coordinator.data["smoothed_ssn_data"]["last_ssn"]["smoothed_ssn"]
+        or coordinator.data["smoothed_ssn_data"]["smoothed_ssn"]
+    )
+
+def x1_return(coordinator):
+    return str(coordinator.data["probabilities_data"][0]["x_class_1_day"]) + "%"
+
+def m1_return(coordinator):
+    return str(coordinator.data["probabilities_data"][0]["x_class_m_day"]) + "%"
+
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
@@ -11,37 +32,34 @@ async def async_setup_entry(hass, entry, async_add_devices):
         {
             "name": "SFI",
             "desc": "Solar Flux Index",
-            "data": coordinator.data["sfi_data"]["sfi"],
+            "data": sfi_return,
         },
         {
             "name": "AI",
             "desc": "A Index",
-            "data": coordinator.data["a_index_data"]["a_index"],
+            "data": ai_return,
         },
         {
             "name": "KPI",
             "desc": "Planetary K-Index",
-            "data": coordinator.data["kp_index_data"]["kp_index"],
+            "data": kpi_return,
         },
         {
             "name": "SSN",
             "desc": "Smoothed SSN",
-            "data": coordinator.data["smoothed_ssn_data"]["last_ssn"]["smoothed_ssn"]
-            or coordinator.data["smoothed_ssn_data"]["smoothed_ssn"],
+            "data": ssn_return,
         },
         {
             "name": "x1",
             "icon": "mdi:sun-wireless",
             "desc": "X-Class 1 Day Probability",
-            "data": str(coordinator.data["probabilities_data"][0]["x_class_1_day"])
-            + "%",
+            "data": x1_return,
         },
         {
             "name": "m1",
             "icon": "mdi:sun-wireless-outline",
             "desc": "M-Class 1 Day Probability",
-            "data": str(coordinator.data["probabilities_data"][0]["m_class_1_day"])
-            + "%",
+            "data": x1_return,
         },
     ]
     async_add_devices(
@@ -68,7 +86,7 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.sensor["data"]
+        return self.sensor["data"](self.coordinator)
 
     @property
     def available(self):
