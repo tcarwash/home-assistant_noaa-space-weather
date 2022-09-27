@@ -3,7 +3,7 @@
 NAME = "NOAA Space Weather"
 DOMAIN = "noaa_space_weather"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.6.2"
+VERSION = "0.6.3"
 
 ATTRIBUTION = "Data provided by https://services.swpc.noaa.gov"
 ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/issues/"
