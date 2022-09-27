@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - master
+      - dev
 jobs:
   draft_release:
     name: Release Drafter
