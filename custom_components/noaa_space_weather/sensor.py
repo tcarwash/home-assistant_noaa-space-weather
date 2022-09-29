@@ -5,29 +5,29 @@ from .entity import NoaaSpaceWeatherEntity
 
 
 def sfi_return(coordinator):
-    if not coordinator.data.get("sfi_data") == None:
+    if not coordinator.data.get("sfi_data") is None:
         return coordinator.data.get("sfi_data").get("sfi")
 
 
 def ai_return(coordinator):
-    if not coordinator.data.get("a_index_data") == None:
+    if not coordinator.data.get("a_index_data") is None:
         return coordinator.data.get("a_index_data", {}).get("a_index")
 
 
 def kpi_return(coordinator):
-    if not coordinator.data.get("kp_index_data") == None:
+    if not coordinator.data.get("kp_index_data") is None:
         return coordinator.data.get("kp_index_data", {}).get("kp_index")
 
 
 def ssn_return(coordinator):
-    if not coordinator.data.get("smoothed_ssn_data") == None:
+    if not coordinator.data.get("smoothed_ssn_data") is None:
         return coordinator.data.get("smoothed_ssn_data", {}).get("last_ssn").get(
             "smoothed_ssn"
         ) or coordinator.data.get("smoothed_ssn_data", {}).get("smoothed_ssn")
 
 
 def x1_return(coordinator):
-    if not coordinator.data.get("probabilities_data") == None:
+    if not coordinator.data.get("probabilities_data") is None:
         return (
             str(
                 coordinator.data.get("probabilities_data", [{}])[0].get("x_class_1_day")
@@ -37,7 +37,7 @@ def x1_return(coordinator):
 
 
 def m1_return(coordinator):
-    if not coordinator.data.get("probabilities_data") == None:
+    if not coordinator.data.get("probabilities_data") is None:
         return (
             str(
                 coordinator.data.get("probabilities_data", [{}])[0].get("m_class_1_day")
