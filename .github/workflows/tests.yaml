@@ -6,6 +6,7 @@ on:
       - main
       - master
       - dev
+      - beta
   pull_request:
   schedule:
     - cron: "0 0 * * *"
