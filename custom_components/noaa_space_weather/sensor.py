@@ -5,30 +5,45 @@ from .entity import NoaaSpaceWeatherEntity
 
 
 def sfi_return(coordinator):
-    return coordinator.data["sfi_data"]["sfi"]
+    if not coordinator.data.get("sfi_data") == None:
+        return coordinator.data.get("sfi_data").get("sfi")
 
 
 def ai_return(coordinator):
-    return coordinator.data["a_index_data"]["a_index"]
+    if not coordinator.data.get("a_index_data") == None:
+        return coordinator.data.get("a_index_data", {}).get("a_index")
 
 
 def kpi_return(coordinator):
-    return coordinator.data["kp_index_data"]["kp_index"]
+    if not coordinator.data.get("kp_index_data") == None:
+        return coordinator.data.get("kp_index_data", {}).get("kp_index")
 
 
 def ssn_return(coordinator):
-    return (
-        coordinator.data["smoothed_ssn_data"]["last_ssn"]["smoothed_ssn"]
-        or coordinator.data["smoothed_ssn_data"]["smoothed_ssn"]
-    )
+    if not coordinator.data.get("smoothed_ssn_data") == None:
+        return coordinator.data.get("smoothed_ssn_data", {}).get("last_ssn").get(
+            "smoothed_ssn"
+        ) or coordinator.data.get("smoothed_ssn_data", {}).get("smoothed_ssn")
 
 
 def x1_return(coordinator):
-    return str(coordinator.data["probabilities_data"][0]["x_class_1_day"]) + "%"
+    if not coordinator.data.get("probabilities_data") == None:
+        return (
+            str(
+                coordinator.data.get("probabilities_data", [{}])[0].get("x_class_1_day")
+            )
+            + "%"
+        )
 
 
 def m1_return(coordinator):
-    return str(coordinator.data["probabilities_data"][0]["x_class_m_day"]) + "%"
+    if not coordinator.data.get("probabilities_data") == None:
+        return (
+            str(
+                coordinator.data.get("probabilities_data", [{}])[0].get("m_class_1_day")
+            )
+            + "%"
+        )
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -92,7 +107,11 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
     @property
     def state(self):
         """Return the state of the sensor."""
-        return self.sensor["data"](self.coordinator)
+        if self.coordinator.data:
+            data = self.sensor["data"](self.coordinator)
+            return data
+        else:
+            return None
 
     @property
     def available(self):
