@@ -8,5 +8,5 @@
   "config_flow": true,
   "codeowners": ["@tcarwash"],
   "requirements": ["swpclib>=4.0.0b2"],
-  "version": "0.6.4beta2"
+  "version": "0.6.4-beta"
 }
