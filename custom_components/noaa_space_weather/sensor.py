@@ -20,10 +20,8 @@ def kpi_return(coordinator):
 
 
 def ssn_return(coordinator):
-    if not coordinator.data.get("smoothed_ssn_data") is None:
-        return coordinator.data.get("smoothed_ssn_data", {}).get("last_ssn").get(
-            "smoothed_ssn"
-        ) or coordinator.data.get("smoothed_ssn_data", {}).get("smoothed_ssn")
+    if not coordinator.data.get("ssn_data") is None:
+        return coordinator.data.get("ssn_data", {}).get("ssn")
 
 
 def x1_return(coordinator):
@@ -67,7 +65,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
         },
         {
             "name": "SSN",
-            "desc": "Smoothed SSN",
+            "desc": "Sunspot Number",
             "data": ssn_return,
         },
         {
