@@ -26,6 +26,7 @@ _Neither this integration nor it's developer have any affiliation with NOAA._
 **These sensors are currently available**
 | Sensor | Description |
 | ----------------------------------------- | ---------------------------------------------- |
+| `sensor.ssn` | Current Sunspot Number. |
 | `sensor.solar_flux_index` | Current Solar Flux Index. |
 | `sensor.planetary_k_index` | Current Planetary K-Index. |
 | `sensor.a_index` | Current A-Index. |
