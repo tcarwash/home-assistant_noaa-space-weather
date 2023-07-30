@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+scripts/install/pip_packages "pip"
+scripts/install/pip_packages setuptools wheel
+scripts/install/core
+rm -rf /workspaces/home-assistant_noaa-space-weather/config
+hass --config $(pwd)/config --script ensure_config
+ln -s /workspaces/home-assistant_noaa-space-weather/custom_components /workspaces/home-assistant_noaa-space-weather/config/custom_components
+
