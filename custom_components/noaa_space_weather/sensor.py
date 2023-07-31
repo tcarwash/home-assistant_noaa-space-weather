@@ -26,22 +26,14 @@ def ssn_return(coordinator):
 
 def x1_return(coordinator):
     if not coordinator.data.get("probabilities_data") is None:
-        return (
-            str(
-                coordinator.data.get("probabilities_data", [{}])[0].get("x_class_1_day")
-            )
-            + "%"
+        return float(
+            coordinator.data.get("probabilities_data", [{}])[0].get("x_class_1_day")
         )
 
 
 def m1_return(coordinator):
     if not coordinator.data.get("probabilities_data") is None:
-        return (
-            str(
-                coordinator.data.get("probabilities_data", [{}])[0].get("m_class_1_day")
-            )
-            + "%"
-        )
+        return coordinator.data.get("probabilities_data", [{}])[0].get("m_class_1_day")
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -73,12 +65,14 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "icon": "mdi:sun-wireless",
             "desc": "X-Class 1 Day Probability",
             "data": x1_return,
+            "unit": "%",
         },
         {
             "name": "m1",
             "icon": "mdi:sun-wireless-outline",
             "desc": "M-Class 1 Day Probability",
-            "data": x1_return,
+            "data": m1_return,
+            "unit": "%",
         },
     ]
     async_add_devices(
@@ -94,13 +88,12 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
         super().__init__(coordinator, entry)
 
     @property
-    def unique_id(self):
-        return f"swpc {self.sensor['name']}"
+    def state_class(self):
+        return "measurement"
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self.sensor["desc"]
+    def unit_of_measurement(self):
+        return self.sensor.get('unit', '')
 
     @property
     def state(self):
@@ -110,6 +103,16 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
             return data
         else:
             return None
+
+
+    @property
+    def unique_id(self):
+        return f"swpc {self.sensor['name']}"
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return self.sensor["desc"]
 
     @property
     def available(self):
