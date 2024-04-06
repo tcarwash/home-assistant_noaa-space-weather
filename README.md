@@ -9,9 +9,7 @@
 
 [![hacs][hacsbadge]][hacs]
 [![Project Maintenance][maintenance-shield]][user_profile]
-
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
+[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
 A (non-official) home assistant integration for the NOAA Space Weather Prediction Center API.
 
@@ -81,6 +79,8 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 
 ---
 
+[buymecoffee]: https://www.buymeacoffee.com/tcarwash
+[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
 [black]: https://github.com/psf/black
 [black-shield]: https://img.shields.io/badge/code%20style-black-000000.svg?style=for-the-badge

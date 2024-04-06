@@ -13,6 +13,13 @@ def ai_return(coordinator):
     if not coordinator.data.get("a_index_data") is None:
         return coordinator.data.get("a_index_data", {}).get("a_index")
 
+def ai_2d_return(coordinator):
+    if not coordinator.data.get("a_index_data") is None:
+        return coordinator.data.get("a_index_data", {}).get("a_2_day_index")
+
+def ai_3d_return(coordinator):
+    if not coordinator.data.get("a_index_data") is None:
+        return coordinator.data.get("a_index_data", {}).get("a_3_day_index")
 
 def kpi_return(coordinator):
     if not coordinator.data.get("kp_index_data") is None:
@@ -49,6 +56,16 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "name": "AI",
             "desc": "A Index",
             "data": ai_return,
+        },
+        {
+            "name": "AI2D",
+            "desc": "2 Day A Index",
+            "data": ai_2d_return,
+        },
+        {
+            "name": "AI3D",
+            "desc": "3 Day A Index",
+            "data": ai_3d_return,
         },
         {
             "name": "KPI",
