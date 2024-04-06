@@ -6,7 +6,11 @@
   "dependencies": [],
   "iot_class": "cloud_polling",
   "config_flow": true,
-  "codeowners": ["@tcarwash"],
-  "requirements": ["swpclib>=4.1.1"],
-  "version": "1.1.0"
+  "codeowners": [
+    "@tcarwash"
+  ],
+  "requirements": [
+    "swpclib>=4.2.0"
+  ],
+  "version": "2.0.1"
 }
