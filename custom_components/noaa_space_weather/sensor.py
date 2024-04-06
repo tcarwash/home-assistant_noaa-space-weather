@@ -42,6 +42,10 @@ def m1_return(coordinator):
     if not coordinator.data.get("probabilities_data") is None:
         return coordinator.data.get("probabilities_data", [{}])[0].get("m_class_1_day")
 
+def polar_cap_absorption_return(coordinator):
+    if not coordinator.data.get("probabilities_data") is None:
+        return coordinator.data.get("probabilities_data", [{}])[0].get("polar_cap_absorption")
+
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
@@ -59,12 +63,12 @@ async def async_setup_entry(hass, entry, async_add_devices):
         },
         {
             "name": "AI2D",
-            "desc": "2 Day A Index",
+            "desc": "A Index 2 Day",
             "data": ai_2d_return,
         },
         {
             "name": "AI3D",
-            "desc": "3 Day A Index",
+            "desc": "A Index 3 Day",
             "data": ai_3d_return,
         },
         {
@@ -76,6 +80,14 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "name": "SSN",
             "desc": "Sunspot Number",
             "data": ssn_return,
+        },
+        {
+            "name": "PolarCapAbsorption",
+            "desc": "Polar Cap Absorption",
+            "data": polar_cap_absorption_return,
+            "state_class": None,
+            "icon": "mdi:sign-pole",
+            "unit": None,
         },
         {
             "name": "x1",
@@ -106,11 +118,15 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
 
     @property
     def state_class(self):
-        return "measurement"
+        return self.sensor.get("state_class","measurement")
 
     @property
     def unit_of_measurement(self):
         return self.sensor.get('unit', '')
+
+    @property
+    def options(self):
+        return self.sensor.get('options', None)
 
     @property
     def state(self):
@@ -147,5 +163,5 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
 
     @property
     def device_class(self):
-        """Return de device class of the sensor."""
-        return "noaa_space_weather__custom_device_class"
+        """Return the device class of the sensor."""
+        return self.sensor.get("device_class","noaa_space_weather__custom_device_class")
