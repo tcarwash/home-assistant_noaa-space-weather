@@ -15,10 +15,7 @@ ICON = "mdi:weather-sunny"
 # BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 
 # Platforms
-BINARY_SENSOR = "binary_sensor"
-SENSOR = "sensor"
-SWITCH = "switch"
-PLATFORMS = [SENSOR]
+PLATFORMS = ["sensor", "image"]
 
 
 # Configuration and options
