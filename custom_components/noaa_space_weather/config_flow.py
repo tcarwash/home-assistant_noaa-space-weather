@@ -5,10 +5,12 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigFlow
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
 
 from .const import DEFAULT_NAME
 from .const import DOMAIN
 
+CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
 class NoaaSpaceWeatherConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow for NOAA Space Weather."""
