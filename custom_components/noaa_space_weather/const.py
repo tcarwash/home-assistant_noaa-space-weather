@@ -11,8 +11,6 @@ ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/issue
 # Icons
 ICON = "mdi:weather-sunny"
 
-# Device classes
-# BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 
 # Platforms
 PLATFORMS = ["sensor", "image"]
