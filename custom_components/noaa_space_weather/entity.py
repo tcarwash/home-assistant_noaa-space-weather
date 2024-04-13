@@ -6,11 +6,13 @@ from homeassistant.components.image import ImageEntity
 from .const import ATTRIBUTION
 from .const import DOMAIN
 
-class NoaaSpaceWeatherImageEntity(ImageEntity):
+
+class NoaaSpaceWeatherImageEntity(CoordinatorEntity, ImageEntity):
     """NOAA Space Weather Image Entity"""
 
     def __init__(self, coordinator, config_entry):
-        super().__init__(coordinator.hass, config_entry)
+        super().__init__(coordinator, config_entry)
+        ImageEntity.__init__(self, coordinator.hass)
         self.coordinator = coordinator
         self.config_entry = config_entry
 
@@ -22,6 +24,7 @@ class NoaaSpaceWeatherImageEntity(ImageEntity):
             "id": str(self.coordinator.data.get("id")),
             "integration": DOMAIN,
         }
+
 
 class NoaaSpaceWeatherEntity(CoordinatorEntity):
     """NOAA Space Weather Entity"""
