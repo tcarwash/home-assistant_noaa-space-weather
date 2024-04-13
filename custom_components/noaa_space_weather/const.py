@@ -1,4 +1,5 @@
 """Constants for NOAA Space Weather."""
+
 # Base component constants
 NAME = "NOAA Space Weather"
 DOMAIN = "noaa_space_weather"

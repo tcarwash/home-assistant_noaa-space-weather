@@ -4,6 +4,7 @@ Custom integration to integrate NOAA Space Weather with Home Assistant.
 For more details about this integration, please refer to
 https://github.com/tcarwash/noaa_space_weather
 """
+
 import asyncio
 import logging
 from datetime import timedelta

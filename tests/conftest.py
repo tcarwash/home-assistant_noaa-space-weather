@@ -1,4 +1,5 @@
 """Global fixtures for NOAA Space Weather integration."""
+
 from unittest.mock import patch
 
 import pytest
