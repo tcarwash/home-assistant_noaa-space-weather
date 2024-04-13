@@ -1,4 +1,5 @@
 """Sample API Client."""
+
 import logging
 
 import aiohttp

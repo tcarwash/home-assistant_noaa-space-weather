@@ -1,4 +1,5 @@
 """Test NOAA Space Weather setup process."""
+
 import pytest
 from custom_components.noaa_space_weather import (
     async_reload_entry,
@@ -37,7 +38,7 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
         type(hass.data[DOMAIN][config_entry.entry_id])
-        == NoaaSpaceWeatherDataUpdateCoordinator
+        is NoaaSpaceWeatherDataUpdateCoordinator
     )
 
     # Reload the entry and assert that the data from above is still there
@@ -45,7 +46,7 @@ async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
         type(hass.data[DOMAIN][config_entry.entry_id])
-        == NoaaSpaceWeatherDataUpdateCoordinator
+        is NoaaSpaceWeatherDataUpdateCoordinator
     )
 
     # Unload the entry and verify that the data has been removed

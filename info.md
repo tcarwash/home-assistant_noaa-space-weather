@@ -12,21 +12,19 @@
 | -------- | ------------------- |
 | `sensor` | Show info from API. |
 
-
 **Currently available Sensors**
 
-| Sensor | Description |
-| ----------------------------------------- | ---------------------------------------------- |
-| `sensor.ssn` | Current Sunspot Number. |
-| `sensor.solar_flux_index` | Current Solar Flux Index. |
-| `sensor.planetary_k_index` | Current Planetary K-Index. |
-| `sensor.a_index` | Current A-Index. |
-| `sensor.a_index_2_day` | 2-Day A-Index. |
-| `sensor.a_index_3_day` | 3-Day A-Index. |
-| `sensor.polar_cap_absorption` | A color-scale indication of polar cap absorption |
-| `sensor.x_class_1_day_probability` | Probability of an X-Class flare within one day.|
-| `sensor.m_class_1_day_probability` | Probability of an M-Class flare within one day.|
-
+| Sensor                             | Description                                      |
+| ---------------------------------- | ------------------------------------------------ |
+| `sensor.ssn`                       | Current Sunspot Number.                          |
+| `sensor.solar_flux_index`          | Current Solar Flux Index.                        |
+| `sensor.planetary_k_index`         | Current Planetary K-Index.                       |
+| `sensor.a_index`                   | Current A-Index.                                 |
+| `sensor.a_index_2_day`             | 2-Day A-Index.                                   |
+| `sensor.a_index_3_day`             | 3-Day A-Index.                                   |
+| `sensor.polar_cap_absorption`      | A color-scale indication of polar cap absorption |
+| `sensor.x_class_1_day_probability` | Probability of an X-Class flare within one day.  |
+| `sensor.m_class_1_day_probability` | Probability of an M-Class flare within one day.  |
 
 ![example][exampleimg]
 

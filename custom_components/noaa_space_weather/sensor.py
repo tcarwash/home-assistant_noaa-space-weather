@@ -1,4 +1,5 @@
 """Sensor platform for NOAA Space Weather."""
+
 from .const import DOMAIN
 from .const import ICON
 from .entity import NoaaSpaceWeatherEntity
@@ -13,13 +14,16 @@ def ai_return(coordinator):
     if not coordinator.data.get("a_index_data") is None:
         return coordinator.data.get("a_index_data", {}).get("a_index")
 
+
 def ai_2d_return(coordinator):
     if not coordinator.data.get("a_index_data") is None:
         return coordinator.data.get("a_index_data", {}).get("a_2_day_index")
 
+
 def ai_3d_return(coordinator):
     if not coordinator.data.get("a_index_data") is None:
         return coordinator.data.get("a_index_data", {}).get("a_3_day_index")
+
 
 def kpi_return(coordinator):
     if not coordinator.data.get("kp_index_data") is None:
@@ -42,9 +46,12 @@ def m1_return(coordinator):
     if not coordinator.data.get("probabilities_data") is None:
         return coordinator.data.get("probabilities_data", [{}])[0].get("m_class_1_day")
 
+
 def polar_cap_absorption_return(coordinator):
     if not coordinator.data.get("probabilities_data") is None:
-        return coordinator.data.get("probabilities_data", [{}])[0].get("polar_cap_absorption")
+        return coordinator.data.get("probabilities_data", [{}])[0].get(
+            "polar_cap_absorption"
+        )
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
@@ -118,15 +125,15 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
 
     @property
     def state_class(self):
-        return self.sensor.get("state_class","measurement")
+        return self.sensor.get("state_class", "measurement")
 
     @property
     def unit_of_measurement(self):
-        return self.sensor.get('unit', '')
+        return self.sensor.get("unit", "")
 
     @property
     def options(self):
-        return self.sensor.get('options', None)
+        return self.sensor.get("options", None)
 
     @property
     def state(self):
@@ -136,7 +143,6 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
             return data
         else:
             return None
-
 
     @property
     def unique_id(self):
@@ -164,4 +170,6 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
     @property
     def device_class(self):
         """Return the device class of the sensor."""
-        return self.sensor.get("device_class","noaa_space_weather__custom_device_class")
+        return self.sensor.get(
+            "device_class", "noaa_space_weather__custom_device_class"
+        )
