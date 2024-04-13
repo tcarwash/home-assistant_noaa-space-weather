@@ -4,6 +4,7 @@ Custom integration to integrate NOAA Space Weather with Home Assistant.
 For more details about this integration, please refer to
 https://github.com/tcarwash/noaa_space_weather
 """
+
 import asyncio
 import logging
 from datetime import timedelta
@@ -11,6 +12,7 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import Config
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -24,6 +26,8 @@ from .const import STARTUP_MESSAGE
 SCAN_INTERVAL = timedelta(minutes=10)
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+PLATFORM_SCHEMA = cv.platform_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: Config):
