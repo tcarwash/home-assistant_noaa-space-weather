@@ -15,24 +15,24 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator = hass.data[DOMAIN][entry.entry_id]
     imagemap = [
         {
-            "name": "ace_solar_wind_3h",
+            "name": "Ace Solar Wind 3 Hour",
             "image_url": "https://services.swpc.noaa.gov/images/ace-mag-swepam-2-hour.gif",
             "device_class": "graph",
         },
         {
-            "name": "aurora_forecast_north",
+            "name": "Aurora Forecast North",
             "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg",
         },
         {
-            "name": "aurora_forecast_south",
+            "name": "Aurora Forecast South",
             "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/south/latest.jpg",
         },
         {
-            "name": "goes_195_angstroms",
+            "name": "GOES 195 Angstroms",
             "image_url": "https://services.swpc.noaa.gov/images/animations/suvi/primary/195/latest.png",
         },
         {
-            "name": "cme",
+            "name": "Coronal Mass Ejection",
             "image_url": "https://services.swpc.noaa.gov/images/animations/lasco-c3/latest.jpg",
         },
     ]
@@ -72,7 +72,7 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
     @property
     def device_class(self):
         """Return the device class of the image."""
-        return self.image_data.get("device_class", "noaa_space_weather__image")
+        return f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
 
     @callback
     def _handle_coordinator_update(self):
