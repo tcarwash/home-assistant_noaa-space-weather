@@ -1,6 +1,6 @@
 """Camera platform for NOAA Space Weather."""
 
-from .const import DOMAIN
+from .const import DOMAIN, ICON
 import logging
 from .entity import NoaaSpaceWeatherImageEntity
 from homeassistant.core import callback
@@ -22,10 +22,12 @@ async def async_setup_entry(hass, entry, async_add_devices):
         {
             "name": "Aurora Forecast North",
             "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg",
+            "icon": "mdi:aurora",
         },
         {
             "name": "Aurora Forecast South",
             "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/south/latest.jpg",
+            "icon": "mdi:aurora",
         },
         {
             "name": "GOES 195 Angstroms",
@@ -73,6 +75,15 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
     def device_class(self):
         """Return the device class of the image."""
         return f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
+
+    @property
+    def icon(self):
+        """Return the icon of the image."""
+        try:
+            icon = self.image_data["icon"]
+        except KeyError:
+            icon = ICON
+        return icon
 
     @callback
     def _handle_coordinator_update(self):
