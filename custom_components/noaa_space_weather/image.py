@@ -36,6 +36,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
         {
             "name": "Coronal Mass Ejection",
             "image_url": "https://services.swpc.noaa.gov/images/animations/lasco-c3/latest.jpg",
+            "icon": "mdi:sun-wireless",
         },
     ]
     async_add_devices(
