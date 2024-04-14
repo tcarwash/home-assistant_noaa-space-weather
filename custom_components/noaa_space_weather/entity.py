@@ -23,6 +23,7 @@ class NoaaSpaceWeatherImageEntity(CoordinatorEntity, ImageEntity):
             "attribution": ATTRIBUTION,
             "id": str(self.coordinator.data.get("id")),
             "integration": DOMAIN,
+            "last_updated": self.image_last_updated,
         }
 
 

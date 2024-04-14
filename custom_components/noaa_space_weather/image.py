@@ -1,6 +1,6 @@
 """Camera platform for NOAA Space Weather."""
 
-from .const import DOMAIN
+from .const import DOMAIN, ICON
 import logging
 from .entity import NoaaSpaceWeatherImageEntity
 from homeassistant.core import callback
@@ -15,25 +15,28 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator = hass.data[DOMAIN][entry.entry_id]
     imagemap = [
         {
-            "name": "ace_solar_wind_3h",
+            "name": "Ace Solar Wind 3 Hour",
             "image_url": "https://services.swpc.noaa.gov/images/ace-mag-swepam-2-hour.gif",
             "device_class": "graph",
         },
         {
-            "name": "aurora_forecast_north",
+            "name": "Aurora Forecast North",
             "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg",
+            "icon": "mdi:aurora",
         },
         {
-            "name": "aurora_forecast_south",
+            "name": "Aurora Forecast South",
             "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/south/latest.jpg",
+            "icon": "mdi:aurora",
         },
         {
-            "name": "goes_195_angstroms",
+            "name": "GOES 195 Angstroms",
             "image_url": "https://services.swpc.noaa.gov/images/animations/suvi/primary/195/latest.png",
         },
         {
-            "name": "cme",
+            "name": "Coronal Mass Ejection",
             "image_url": "https://services.swpc.noaa.gov/images/animations/lasco-c3/latest.jpg",
+            "icon": "mdi:sun-wireless",
         },
     ]
     async_add_devices(
@@ -72,10 +75,20 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
     @property
     def device_class(self):
         """Return the device class of the image."""
-        return self.image_data.get("device_class", "noaa_space_weather__image")
+        return f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
+
+    @property
+    def icon(self):
+        """Return the icon of the image."""
+        try:
+            icon = self.image_data["icon"]
+        except KeyError:
+            icon = ICON
+        return icon
 
     @callback
     def _handle_coordinator_update(self):
         self.image_last_updated = datetime.now()
+        self._attr_image_last_updated = self.image_last_updated
         self._cached_image = None
         self.async_write_ha_state()
