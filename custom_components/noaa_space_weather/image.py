@@ -78,10 +78,6 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
         return f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
 
     @property
-    def last_update(self):
-        return self.image_last_updated()
-
-    @property
     def icon(self):
         """Return the icon of the image."""
         try:
@@ -93,5 +89,6 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
     @callback
     def _handle_coordinator_update(self):
         self.image_last_updated = datetime.now()
+        self._attr_image_last_updated = self.image_last_updated
         self._cached_image = None
         self.async_write_ha_state()
