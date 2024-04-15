@@ -25,3 +25,6 @@ class NoaaSpaceWeatherApiClient:
             data = {}
 
         return data
+
+    async def async_load_animation(self, product) -> bytes:
+        return await self.swpc.gen_gif(product)
