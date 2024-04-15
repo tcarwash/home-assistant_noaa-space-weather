@@ -57,10 +57,12 @@ async def async_setup_entry(hass, entry, async_add_devices):
         },
     ]
     async_add_devices(
-        [NoaaSpaceWeatherImage(coordinator, entry, image=i) for i in imagemap]
+        [NoaaSpaceWeatherImage(coordinator, entry, image=i) for i in imagemap],
+        update_before_add=True,
     )
     async_add_devices(
-        [NoaaSpaceWeatherAnimation(coordinator, entry, image=i) for i in animationmap]
+        [NoaaSpaceWeatherAnimation(coordinator, entry, image=i) for i in animationmap],
+        update_before_add=True,
     )
 
 
@@ -102,22 +104,24 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherAnimationEntity):
             icon = ICON
         return icon
 
+    async def async_update(self):
+        return await self.async_image()
+
     async def async_image(self):
-        if not self.image_last_updated or (
-            self.image_last_updated > datetime.now() + timedelta(minutes=5)
+        if not self._cached_image or (
+            self.image_last_updated > datetime.now() + timedelta(minutes=30)
         ):
             _LOGGER.debug("updating async image")
             self.image_last_updated = datetime.now()
             self._attr_image_last_updated = self.image_last_updated
-            self.async_write_ha_state()
             image_bytes = await self.coordinator.api.async_load_animation(
                 self.image_data["product"]
             )
+            _LOGGER.debug(f"Updated animation for {self.name}, caching image")
             self._cached_image = image_bytes
-            self.async_write_ha_state()
             return image_bytes
         else:
-            _LOGGER.debug("returning cached image")
+            _LOGGER.debug(f"returning cached image for: {self.name}")
             return self._cached_image
 
 
