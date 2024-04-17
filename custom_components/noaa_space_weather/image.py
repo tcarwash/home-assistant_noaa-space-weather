@@ -2,6 +2,7 @@
 
 from .const import DOMAIN, ICON
 import logging
+import asyncio
 from .entity import NoaaSpaceWeatherImageEntity, NoaaSpaceWeatherAnimationEntity
 from homeassistant.core import callback
 from datetime import datetime, timedelta
@@ -15,18 +16,33 @@ async def async_setup_entry(hass, entry, async_add_devices):
     coordinator = hass.data[DOMAIN][entry.entry_id]
     animationmap = [
         {
-            "name": "SUVI Secondary 284 Angstroms",
+            "name": "Animated SUVI Secondary 284 Angstroms",
             "product": "/products/animations/suvi-secondary-284.json",
             "device_class": "animation",
         },
         {
-            "name": "SUVI Primary 195 Angstroms",
+            "name": "Animated SUVI Primary 195 Angstroms",
             "product": "/products/animations/suvi-primary-195.json",
             "device_class": "animation",
         },
         {
-            "name": "SUVI Primary 304 Angstroms",
+            "name": "Animated SUVI Primary 304 Angstroms",
             "product": "/products/animations/suvi-primary-304.json",
+            "device_class": "animation",
+        },
+        {
+            "name": "Animated WFS Ionosphere",
+            "product": "/products/animations/wam-ipe/wfs_ionosphere_new.json",
+            "device_class": "animation",
+        },
+        {
+            "name": "Animated Lasco C2",
+            "product": "/products/animations/lasco-c2.json",
+            "device_class": "animation",
+        },
+        {
+            "name": "Animated Lasco C3",
+            "product": "/products/animations/lasco-c3.json",
             "device_class": "animation",
         },
     ]
@@ -105,13 +121,16 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherAnimationEntity):
         return icon
 
     async def async_update(self):
-        return await self.async_image()
-
-    async def async_image(self):
-        if not self._cached_image or (
-            self.image_last_updated > datetime.now() + timedelta(minutes=30)
-        ):
-            _LOGGER.debug("updating async image")
+        if not self._cached_image:
+            _LOGGER.debug("returning still")
+            image_bytes = await self.coordinator.api.async_get_first_frame(
+                self.image_data["product"]
+            )
+            self._cached_image = image_bytes
+            self.image_last_updated = datetime.now() - timedelta(days=1)
+            loop = asyncio.get_event_loop()
+            loop.create_task(self.async_update())
+        else:
             self.image_last_updated = datetime.now()
             self._attr_image_last_updated = self.image_last_updated
             image_bytes = await self.coordinator.api.async_load_animation(
@@ -119,10 +138,16 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherAnimationEntity):
             )
             _LOGGER.debug(f"Updated animation for {self.name}, caching image")
             self._cached_image = image_bytes
-            return image_bytes
+
+    async def async_image(self):
+        if not self._cached_image or (
+            self.image_last_updated < datetime.now() - timedelta(minutes=5)
+        ):
+            loop = asyncio.get_event_loop()
+            loop.create_task(self.async_update())
         else:
             _LOGGER.debug(f"returning cached image for: {self.name}")
-            return self._cached_image
+        return self._cached_image
 
 
 class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
