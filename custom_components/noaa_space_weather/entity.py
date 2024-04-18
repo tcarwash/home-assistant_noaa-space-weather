@@ -7,25 +7,6 @@ from .const import ATTRIBUTION
 from .const import DOMAIN
 
 
-class NoaaSpaceWeatherAnimationEntity(ImageEntity):
-    """NOAA Space Weather Image Entity"""
-
-    def __init__(self, coordinator, config_entry):
-        super().__init__(coordinator.hass, config_entry)
-        self.coordinator = coordinator
-        self.config_entry = config_entry
-
-    @property
-    def extra_state_attributes(self):
-        """Return the state attributes."""
-        return {
-            "attribution": ATTRIBUTION,
-            "id": str(self.coordinator.data.get("id")),
-            "integration": DOMAIN,
-            "last_updated": self.image_last_updated,
-        }
-
-
 class NoaaSpaceWeatherImageEntity(CoordinatorEntity, ImageEntity):
     """NOAA Space Weather Image Entity"""
 
