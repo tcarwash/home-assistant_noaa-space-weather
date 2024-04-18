@@ -7,6 +7,6 @@
   "documentation": "https://github.com/tcarwash/home-assistant_noaa-space-weather",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/tcarwash/home-assistant_noaa-space-weather/issues",
-  "requirements": ["swpclib==4.3.6"],
+  "requirements": ["swpclib==4.3.7"],
   "version": "2.1.0-beta3"
 }
