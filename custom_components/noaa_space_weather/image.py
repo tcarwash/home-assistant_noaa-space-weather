@@ -3,9 +3,9 @@
 from .const import DOMAIN, ICON
 import logging
 import asyncio
-from .entity import NoaaSpaceWeatherImageEntity, NoaaSpaceWeatherAnimationEntity
+from .entity import NoaaSpaceWeatherImageEntity
 from homeassistant.core import callback
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -78,11 +78,10 @@ async def async_setup_entry(hass, entry, async_add_devices):
     )
     async_add_devices(
         [NoaaSpaceWeatherAnimation(coordinator, entry, image=i) for i in animationmap],
-        update_before_add=True,
     )
 
 
-class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherAnimationEntity):
+class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
     """noaa_space_weather Image class."""
 
     def __init__(self, coordinator, entry, image):
@@ -122,32 +121,32 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherAnimationEntity):
 
     async def async_update(self):
         if not self._cached_image:
-            _LOGGER.debug("returning still")
+            _LOGGER.debug(f"Returning still for {self.name}")
             image_bytes = await self.coordinator.api.async_get_first_frame(
                 self.image_data["product"]
             )
-            self._cached_image = image_bytes
-            self.image_last_updated = datetime.now() - timedelta(days=1)
-            loop = asyncio.get_event_loop()
-            loop.create_task(self.async_update())
+            asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
         else:
-            self.image_last_updated = datetime.now()
-            self._attr_image_last_updated = self.image_last_updated
+            _LOGGER.debug(f"Returning still for {self.name}")
             image_bytes = await self.coordinator.api.async_load_animation(
                 self.image_data["product"]
             )
             _LOGGER.debug(f"Updated animation for {self.name}, caching image")
-            self._cached_image = image_bytes
+        self._cached_image = image_bytes
+        self.image_last_updated = datetime.now()
+        self._attr_image_last_updated = self.image_last_updated
+        _LOGGER.debug(f"Writing {self.name} state")
+        return image_bytes
+
+    @callback
+    def _handle_coordinator_update(self):
+        self.image_last_updated = datetime.now()
+        self._attr_image_last_updated = self.image_last_updated
+        asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
+        self.async_write_ha_state()
 
     async def async_image(self):
-        if not self._cached_image or (
-            self.image_last_updated < datetime.now() - timedelta(minutes=5)
-        ):
-            loop = asyncio.get_event_loop()
-            loop.create_task(self.async_update())
-        else:
-            _LOGGER.debug(f"returning cached image for: {self.name}")
-        return self._cached_image
+        return self._cached_image or await self.async_update()
 
 
 class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):

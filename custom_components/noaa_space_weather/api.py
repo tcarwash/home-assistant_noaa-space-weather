@@ -29,7 +29,6 @@ class NoaaSpaceWeatherApiClient:
     async def async_get_first_frame(self, product) -> bytes:
         response_json = await self.swpc.get_data_method(product)
         first_frame_url = response_json[0].get("url")
-        _LOGGER.debug(first_frame_url)
         return await self.swpc.get_bytes_method(first_frame_url)
 
     async def async_load_animation(self, product) -> bytes:
