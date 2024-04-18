@@ -125,18 +125,23 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
             image_bytes = await self.coordinator.api.async_get_first_frame(
                 self.image_data["product"]
             )
+            self._cached_image = image_bytes
+            self.image_last_updated = datetime.now()
+            self._attr_image_last_updated = self.image_last_updated
+            _LOGGER.debug(f"Writing {self.name} state")
             asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
+            return image_bytes
         else:
-            _LOGGER.debug(f"Returning still for {self.name}")
+            _LOGGER.debug(f"Updating animation for {self.name}")
             image_bytes = await self.coordinator.api.async_load_animation(
                 self.image_data["product"]
             )
             _LOGGER.debug(f"Updated animation for {self.name}, caching image")
-        self._cached_image = image_bytes
-        self.image_last_updated = datetime.now()
-        self._attr_image_last_updated = self.image_last_updated
-        _LOGGER.debug(f"Writing {self.name} state")
-        return image_bytes
+            self._cached_image = image_bytes
+            self.image_last_updated = datetime.now()
+            self._attr_image_last_updated = self.image_last_updated
+            _LOGGER.debug(f"Writing {self.name} state")
+            return image_bytes
 
     @callback
     def _handle_coordinator_update(self):
