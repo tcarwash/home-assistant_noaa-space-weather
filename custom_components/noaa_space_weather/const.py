@@ -4,7 +4,7 @@
 NAME = "NOAA Space Weather"
 DOMAIN = "noaa_space_weather"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "2.0.1"
+VERSION = "2.1.0-beta"
 
 ATTRIBUTION = "Data provided by https://services.swpc.noaa.gov"
 ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/issues/"
@@ -12,14 +12,9 @@ ISSUE_URL = "https://github.com/tcarwash/home-assistant_noaa-space-weather/issue
 # Icons
 ICON = "mdi:weather-sunny"
 
-# Device classes
-# BINARY_SENSOR_DEVICE_CLASS = "connectivity"
 
 # Platforms
-BINARY_SENSOR = "binary_sensor"
-SENSOR = "sensor"
-SWITCH = "switch"
-PLATFORMS = [SENSOR]
+PLATFORMS = ["sensor", "image"]
 
 
 # Configuration and options

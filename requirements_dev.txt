@@ -1,4 +1,4 @@
 homeassistant
 pre-commit==2.20.0
 black==24.3.0
-swpclib>=4.3.2
+swpclib>=4.3.7
