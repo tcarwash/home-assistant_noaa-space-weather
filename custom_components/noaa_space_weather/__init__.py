@@ -2,7 +2,7 @@
 Custom integration to integrate NOAA Space Weather with Home Assistant.
 
 For more details about this integration, please refer to
-https://github.com/tcarwash/noaa_space_weather
+https://github.com/tcarwash/home-assistant_noaa-space-weather
 """
 
 import asyncio
