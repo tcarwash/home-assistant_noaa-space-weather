@@ -25,4 +25,5 @@ class NoaaSpaceWeatherEntity(CoordinatorEntity):
             "attribution": ATTRIBUTION,
             "id": str(self.coordinator.data.get("id")),
             "integration": DOMAIN,
+            "state_class": "measurement",
         }
