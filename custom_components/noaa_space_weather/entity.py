@@ -1,6 +1,7 @@
 """NoaaSpaceWeatherEntity class"""
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.components.image import ImageEntity
 
 from .const import ATTRIBUTION
 from .const import DOMAIN
