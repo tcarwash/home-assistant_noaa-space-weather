@@ -74,7 +74,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     ]
     async_add_devices(
         [NoaaSpaceWeatherImage(coordinator, entry, image=i) for i in imagemap],
-        update_before_add=True,
+        update_before_add=False,
     )
     async_add_devices(
         [NoaaSpaceWeatherAnimation(coordinator, entry, image=i) for i in animationmap],
