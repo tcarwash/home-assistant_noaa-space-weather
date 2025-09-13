@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Lightweight bootstrap: avoid touching /config to prevent permission errors.
+WS_DIR="${WORKSPACE_DIRECTORY:-${containerWorkspaceFolder:-/workspaces}}"
+echo "[bootstrap] Workspace: ${WS_DIR}"
+echo "[bootstrap] Devcontainer ready. Tasks: Start Home Assistant (Supervisor), Sync NOAA Space Weather to HA, Restart Home Assistant Core, Tail HA logs."

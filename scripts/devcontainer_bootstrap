@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ensure config/custom_components exists in the workspace path (inside the container)
+WS_DIR="${WORKSPACE_DIRECTORY:-${containerWorkspaceFolder:-/workspaces}}"
+CFG_DIR="${WS_DIR}/config"
+CC_DIR="${CFG_DIR}/custom_components"
+INTEGRATION_SRC="${WS_DIR}/custom_components/noaa_space_weather"
+INTEGRATION_DST="${CC_DIR}/noaa_space_weather"
+
+mkdir -p "${CC_DIR}"
+
+# If destination is missing or a broken link, link it to the workspace source
+if [ ! -e "${INTEGRATION_DST}" ]; then
+  ln -s "${INTEGRATION_SRC}" "${INTEGRATION_DST}"
+fi
+
+# Print a brief status
+ls -l "${CC_DIR}" | sed -n '1,10p'
+
+echo "Devcontainer bootstrap complete: custom component mapped under ${INTEGRATION_DST}"

@@ -1,28 +1,36 @@
 {
+  // Tasks for Supervisor-based Home Assistant devcontainer
+  "$schema": "vscode://schemas/tasks",
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Home Assistant on port 9123",
+      "label": "Start Home Assistant (Supervisor)",
       "type": "shell",
-      "command": "container start",
+      "command": "supervisor_run",
       "problemMatcher": []
     },
     {
-      "label": "Run Home Assistant configuration against /config",
+      "label": "Sync NOAA Space Weather to HA",
       "type": "shell",
-      "command": "container check",
+      "command": "bash scripts/sync_integration.sh",
       "problemMatcher": []
     },
     {
-      "label": "Upgrade Home Assistant to latest dev",
+      "label": "Restart Home Assistant Core",
       "type": "shell",
-      "command": "container install",
+      "command": "ha core restart",
       "problemMatcher": []
     },
     {
-      "label": "Install a specific version of Home Assistant",
+      "label": "Tail Home Assistant Core Logs",
       "type": "shell",
-      "command": "container set-version",
+      "command": "ha core logs -f",
+      "problemMatcher": []
+    },
+    {
+      "label": "Show HA config path",
+      "type": "shell",
+      "command": "bash -lc 'echo Detected config: $(readlink -f /config || echo /config); ls -la /config || true; ls -la /mnt/supervisor/homeassistant || true'",
       "problemMatcher": []
     }
   ]
