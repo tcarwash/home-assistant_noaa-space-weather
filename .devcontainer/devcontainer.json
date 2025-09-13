@@ -1,5 +1,5 @@
 {
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12",
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.13",
   "name": "NOAA Space Weather integration development",
   "postCreateCommand": "scripts/setup",
   "postStartCommand": "hass --config /workspaces/home-assistant_noaa-space-weather/config/",
