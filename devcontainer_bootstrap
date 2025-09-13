@@ -1,7 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Lightweight bootstrap: avoid touching /config to prevent permission errors.
+# Lightweight bootstrap for each container start. Avoid heavy writes.
 WS_DIR="${WORKSPACE_DIRECTORY:-${containerWorkspaceFolder:-/workspaces}}"
+CACHE_DIR="${WS_DIR}/.devcontainer/.cache"
+SESSION_MARKER="${CACHE_DIR}/post-start.$(date +%Y-%m-%d).done"
+mkdir -p "${CACHE_DIR}"
+
 echo "[bootstrap] Workspace: ${WS_DIR}"
+
+# Ensure Supervisor is running to make tasks useful
+if ! ha core info >/dev/null 2>&1; then
+  echo "[bootstrap] Starting Supervisor (if not already running)..."
+  if command -v supervisor_run >/dev/null 2>&1; then
+    supervisor_run || true
+  fi
+fi
+
+# One sync per day on start (best-effort) to keep HA copy fresh without being intrusive.
+if [[ ! -f "${SESSION_MARKER}" ]]; then
+  if [[ -x "${WS_DIR}/scripts/sync_integration.sh" ]]; then
+    echo "[bootstrap] Auto-syncing integration (daily)..."
+    bash "${WS_DIR}/scripts/sync_integration.sh" || true
+  fi
+  date -Iseconds > "${SESSION_MARKER}"
+fi
+
 echo "[bootstrap] Devcontainer ready. Tasks: Start Home Assistant (Supervisor), Sync NOAA Space Weather to HA, Restart Home Assistant Core, Tail HA logs."

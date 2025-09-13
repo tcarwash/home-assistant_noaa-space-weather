@@ -1,6 +1,7 @@
 {
   "image": "ghcr.io/home-assistant/devcontainer:addons",
   "name": "NOAA Space Weather integration development",
+  "postCreateCommand": "bash scripts/devcontainer_first_start.sh",
   "postStartCommand": "bash devcontainer_bootstrap",
   "appPort": ["7123:8123", "7357:4357"],
   "forwardPorts": [8123, 4357],
