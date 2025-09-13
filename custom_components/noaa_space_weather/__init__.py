@@ -14,7 +14,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.core_config import Config
+from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
@@ -30,7 +30,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 PLATFORM_SCHEMA = cv.platform_only_config_schema(DOMAIN)
 
 
-async def async_setup(hass: HomeAssistant, config: Config):
+async def async_setup(hass: HomeAssistant, config: ConfigType):
     """Set up this integration using YAML is not supported."""
     return True
 
@@ -52,12 +52,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+    # Determine enabled platforms and forward setup for them (sensor + image)
+    enabled_platforms = [p for p in PLATFORMS if entry.options.get(p, True)]
+    coordinator.platforms = enabled_platforms
+    await hass.config_entries.async_forward_entry_setups(entry, enabled_platforms)
 
-    for platform in PLATFORMS:
-        if entry.options.get(platform, True):
-            coordinator.platforms.append(platform)
-        entry.add_update_listener(async_reload_entry)
+    entry.add_update_listener(async_reload_entry)
 
     return True
 

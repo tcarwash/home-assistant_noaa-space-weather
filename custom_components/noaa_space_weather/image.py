@@ -1,20 +1,23 @@
 """Image platform for NOAA Space Weather."""
 
+import asyncio
+import logging
+import random
+from datetime import datetime
+
+from homeassistant.core import callback
+
 from .const import DOMAIN, ICON
 from .entity import NoaaSpaceWeatherImageEntity
-import logging
-import asyncio
-from homeassistant.core import callback
-from datetime import datetime
-import random
 
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(hass, entry, async_add_entities):
     """Set up NOAA Space Weather image platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
+
     animationmap = [
         {
             "name": "Animated SUVI Secondary 284 Angstroms",
@@ -47,6 +50,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "device_class": "animation",
         },
     ]
+
     imagemap = [
         {
             "name": "Ace Solar Wind 3 Hour",
@@ -73,58 +77,47 @@ async def async_setup_entry(hass, entry, async_add_devices):
             "icon": "mdi:sun-wireless",
         },
     ]
-    async_add_devices(
-        [NoaaSpaceWeatherImage(coordinator, entry, image=i) for i in imagemap],
-        update_before_add=True,
+
+    _LOGGER.info(
+        "Setting up %d images and %d animations", len(imagemap), len(animationmap)
     )
-    async_add_devices(
-        [NoaaSpaceWeatherAnimation(coordinator, entry, image=i) for i in animationmap],
-    )
+
+    entities = [
+        *(NoaaSpaceWeatherImage(coordinator, entry, i) for i in imagemap),
+        *(NoaaSpaceWeatherAnimation(coordinator, entry, i) for i in animationmap),
+    ]
+    async_add_entities(entities, update_before_add=True)
 
 
 class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
-    """noaa_space_weather Image class."""
+    """Animated image entity built from product frames."""
 
     def __init__(self, coordinator, entry, image):
         self.image_data = image
         self.entry = entry
         self.coordinator = coordinator
-
         super().__init__(coordinator, entry)
+
+        # Prefer attribute fields to avoid overriding typed properties on Entity
+        self._attr_unique_id = f"swpc {self.image_data.get('name')}"
+        self._attr_name = self.image_data.get("name")
+        self._attr_device_class = (
+            f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
+        )
+        self._attr_icon = self.image_data.get("icon", ICON)
+
         self._jitter = random.uniform(2, 15)
-        self._cached_image = None
-
-    @property
-    def unique_id(self):
-        return f"swpc {self.image_data['name']}"
-
-    @property
-    def name(self):
-        return self.image_data.get("name")
-
-    @property
-    def device_class(self):
-        """Return the device class of the image."""
-        return f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
-
-    @property
-    def icon(self):
-        """Return the icon of the image."""
-        try:
-            icon = self.image_data["icon"]
-        except KeyError:
-            icon = ICON
-        return icon
+        self._raw_bytes: bytes | None = None
 
     async def async_update(self):
-        """Refresh the cached image bytes; lazy-build full animation."""
-        if not self._cached_image:
+        """Fetch/refresh animation bytes."""
+        if not self._raw_bytes:
             _LOGGER.debug("%s: fetching first frame", self.name)
             image_bytes = await self.coordinator.api.async_get_first_frame(
                 self.image_data["product"]
             )
             self._set_cached(image_bytes)
-            # Build full animation in background with jitter
+            # build full animation in background
             self.hass.loop.create_task(self._build_animation_with_jitter())
             return image_bytes
 
@@ -144,7 +137,7 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
             self._set_cached(image_bytes)
             self.async_write_ha_state()
             _LOGGER.debug("%s: background animation ready", self.name)
-        except Exception as err:
+        except Exception as err:  # pragma: no cover - best effort
             _LOGGER.debug("%s: background animation failed: %s", self.name, err)
 
     def _detect_mime(self, data: bytes) -> str:
@@ -158,10 +151,9 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         return "application/octet-stream"
 
     def _set_cached(self, image_bytes: bytes) -> None:
-        self._cached_image = image_bytes
+        self._raw_bytes = image_bytes
         self.image_last_updated = datetime.now()
         self._attr_image_last_updated = self.image_last_updated
-        # Let HA know how to serve the bytes
         try:
             self._attr_content_type = self._detect_mime(image_bytes)
         except Exception:  # pragma: no cover - best effort
@@ -169,56 +161,34 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
     @callback
     def _handle_coordinator_update(self):
-        # Stagger refresh to avoid all entities downloading at once
         self.image_last_updated = datetime.now()
         self._attr_image_last_updated = self.image_last_updated
         self.hass.loop.create_task(self._build_animation_with_jitter())
         self.async_write_ha_state()
 
     async def async_image(self):
-        return self._cached_image or await self.async_update()
+        return self._raw_bytes or await self.async_update()
 
 
 class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
-    """noaa_space_weather Image class."""
+    """Static image entity served directly from remote URL."""
 
     def __init__(self, coordinator, entry, image):
         self.image_data = image
         self.entry = entry
         self.coordinator = coordinator
-
         super().__init__(coordinator, entry)
-        self._cached_image = None
 
-    @property
-    def unique_id(self):
-        return f"swpc {self.image_data['name']}"
-
-    @property
-    def name(self):
-        return self.image_data.get("name")
-
-    @property
-    def image_url(self):
-        return self.image_data.get("image_url")
-
-    @property
-    def device_class(self):
-        """Return the device class of the image."""
-        return f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
-
-    @property
-    def icon(self):
-        """Return the icon of the image."""
-        try:
-            icon = self.image_data["icon"]
-        except KeyError:
-            icon = ICON
-        return icon
+        self._attr_unique_id = f"swpc {self.image_data.get('name')}"
+        self._attr_name = self.image_data.get("name")
+        self._attr_image_url = self.image_data.get("image_url")
+        self._attr_device_class = (
+            f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
+        )
+        self._attr_icon = self.image_data.get("icon", ICON)
 
     @callback
     def _handle_coordinator_update(self):
         self.image_last_updated = datetime.now()
         self._attr_image_last_updated = self.image_last_updated
-        self._cached_image = None
         self.async_write_ha_state()
