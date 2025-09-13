@@ -1,18 +1,19 @@
-"""Camera platform for NOAA Space Weather."""
+"""Image platform for NOAA Space Weather."""
 
 from .const import DOMAIN, ICON
+from .entity import NoaaSpaceWeatherImageEntity
 import logging
 import asyncio
-from .entity import NoaaSpaceWeatherImageEntity
 from homeassistant.core import callback
 from datetime import datetime
+import random
 
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup camera platform."""
+    """Set up NOAA Space Weather image platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     animationmap = [
         {
@@ -88,7 +89,10 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         self.image_data = image
         self.entry = entry
         self.coordinator = coordinator
+
         super().__init__(coordinator, entry)
+        self._jitter = random.uniform(2, 15)
+        self._cached_image = None
 
     @property
     def unique_id(self):
@@ -97,13 +101,6 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
     @property
     def name(self):
         return self.image_data.get("name")
-
-    @property
-    def state(self):
-        if self._cached_image:
-            return "available"
-        else:
-            return "available"
 
     @property
     def device_class(self):
@@ -120,29 +117,62 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         return icon
 
     async def async_update(self):
+        """Refresh the cached image bytes; lazy-build full animation."""
         if not self._cached_image:
-            _LOGGER.debug(f"Returning still for {self.name}")
+            _LOGGER.debug("%s: fetching first frame", self.name)
             image_bytes = await self.coordinator.api.async_get_first_frame(
                 self.image_data["product"]
             )
-            asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
-        else:
-            _LOGGER.debug(f"Returning still for {self.name}")
+            self._set_cached(image_bytes)
+            # Build full animation in background with jitter
+            self.hass.loop.create_task(self._build_animation_with_jitter())
+            return image_bytes
+
+        _LOGGER.debug("%s: refreshing full animation", self.name)
+        image_bytes = await self.coordinator.api.async_load_animation(
+            self.image_data["product"]
+        )
+        self._set_cached(image_bytes)
+        return image_bytes
+
+    async def _build_animation_with_jitter(self):
+        try:
+            await asyncio.sleep(self._jitter)
             image_bytes = await self.coordinator.api.async_load_animation(
                 self.image_data["product"]
             )
-            _LOGGER.debug(f"Updated animation for {self.name}, caching image")
+            self._set_cached(image_bytes)
+            self.async_write_ha_state()
+            _LOGGER.debug("%s: background animation ready", self.name)
+        except Exception as err:
+            _LOGGER.debug("%s: background animation failed: %s", self.name, err)
+
+    def _detect_mime(self, data: bytes) -> str:
+        if len(data) >= 4:
+            if data[:3] == b"GIF":
+                return "image/gif"
+            if data[:4] == b"\x89PNG":
+                return "image/png"
+            if data[:2] == b"\xff\xd8":
+                return "image/jpeg"
+        return "application/octet-stream"
+
+    def _set_cached(self, image_bytes: bytes) -> None:
         self._cached_image = image_bytes
         self.image_last_updated = datetime.now()
         self._attr_image_last_updated = self.image_last_updated
-        _LOGGER.debug(f"Writing {self.name} state")
-        return image_bytes
+        # Let HA know how to serve the bytes
+        try:
+            self._attr_content_type = self._detect_mime(image_bytes)
+        except Exception:  # pragma: no cover - best effort
+            self._attr_content_type = "application/octet-stream"
 
     @callback
     def _handle_coordinator_update(self):
+        # Stagger refresh to avoid all entities downloading at once
         self.image_last_updated = datetime.now()
         self._attr_image_last_updated = self.image_last_updated
-        asyncio.run_coroutine_threadsafe(self.async_update(), self.hass.loop)
+        self.hass.loop.create_task(self._build_animation_with_jitter())
         self.async_write_ha_state()
 
     async def async_image(self):
@@ -156,7 +186,9 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
         self.image_data = image
         self.entry = entry
         self.coordinator = coordinator
+
         super().__init__(coordinator, entry)
+        self._cached_image = None
 
     @property
     def unique_id(self):
@@ -165,13 +197,6 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
     @property
     def name(self):
         return self.image_data.get("name")
-
-    @property
-    def state(self):
-        if self._cached_image:
-            return "available"
-        else:
-            return "available"
 
     @property
     def image_url(self):
