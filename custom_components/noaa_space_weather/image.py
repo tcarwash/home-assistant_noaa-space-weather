@@ -25,8 +25,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
             "device_class": "animation",
         },
         {
-            "name": "Animated SUVI Primary 195 Angstroms",
-            "product": "/products/animations/suvi-primary-195.json",
+            "name": "Animated SUVI Primary 171 Angstroms",
+            "product": "/products/animations/suvi-primary-171.json",
             "device_class": "animation",
         },
         {
@@ -35,9 +35,34 @@ async def async_setup_entry(hass, entry, async_add_entities):
             "device_class": "animation",
         },
         {
+            "name": "Animated SUVI Thematic Map",
+            "product": "/products/animations/suvi-primary-map.json",
+            "device_class": "animation",
+        },
+        {
             "name": "Animated WFS Ionosphere",
             "product": "/products/animations/wam-ipe/wfs_ionosphere_new.json",
             "device_class": "animation",
+        },
+        {
+            "name": "Animated Coronagraph CCOR1",
+            "product": "/products/animations/ccor1/ccor1.json",
+            "device_class": "animation",
+        },
+        {
+            "name": "Animated Geospace Magnetosphere Velocity",
+            "product": "/products/animations/geospace/velocity.json",
+            "icon": "mdi:earth",
+        },
+        {
+            "name": "Animated Geospace Magnetosphere Density",
+            "product": "/products/animations/geospace/density.json",
+            "icon": "mdi:earth",
+        },
+        {
+            "name": "Animated Geospace Magnetosphere Pressure",
+            "product": "/products/animations/geospace/pressure.json",
+            "icon": "mdi:earth",
         },
         {
             "name": "Animated Lasco C2",
@@ -49,6 +74,21 @@ async def async_setup_entry(hass, entry, async_add_entities):
             "product": "/products/animations/lasco-c3.json",
             "device_class": "animation",
         },
+        {
+            "name": "Animated Aurora Forecast North",
+            "product": "/products/animations/ovation_north_24h.json",
+            "icon": "mdi:aurora",
+        },
+        {
+            "name": "Animated Aurora Forecast South",
+            "product": "/products/animations/ovation_south_24h.json",
+            "icon": "mdi:aurora",
+        },
+        {
+            "name": "Animated Geoelectric Field US-Canada",
+            "product": "/products/animations/geoelectric/US-Canada-1D.json",
+            "icon": "mdi:earth",
+        },
     ]
 
     imagemap = [
@@ -58,23 +98,14 @@ async def async_setup_entry(hass, entry, async_add_entities):
             "device_class": "graph",
         },
         {
-            "name": "Aurora Forecast North",
-            "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/north/latest.jpg",
+            "name": "Todays Forcasted Aurora Viewline",
+            "image_url": "https://services.swpc.noaa.gov/experimental/images/aurora_dashboard/tonights_static_viewline_forecast.png",
             "icon": "mdi:aurora",
         },
         {
-            "name": "Aurora Forecast South",
-            "image_url": "https://services.swpc.noaa.gov/images/animations/ovation/south/latest.jpg",
+            "name": "Tomorrows Forcasted Aurora Viewline",
+            "image_url": "https://services.swpc.noaa.gov/experimental/images/aurora_dashboard/tomorrow_nights_static_viewline_forecast.png",
             "icon": "mdi:aurora",
-        },
-        {
-            "name": "GOES 195 Angstroms",
-            "image_url": "https://services.swpc.noaa.gov/images/animations/suvi/primary/195/latest.png",
-        },
-        {
-            "name": "Coronal Mass Ejection",
-            "image_url": "https://services.swpc.noaa.gov/images/animations/lasco-c3/latest.jpg",
-            "icon": "mdi:sun-wireless",
         },
     ]
 
@@ -111,21 +142,30 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
     async def async_update(self):
         """Fetch/refresh animation bytes."""
+        image_bytes = b""
         if not self._raw_bytes:
             _LOGGER.debug("%s: fetching first frame", self.name)
-            image_bytes = await self.coordinator.api.async_get_first_frame(
-                self.image_data["product"]
-            )
-            self._set_cached(image_bytes)
-            # build full animation in background
-            self.hass.loop.create_task(self._build_animation_with_jitter())
+            try:
+                image_bytes = await self.coordinator.api.async_get_first_frame(
+                    self.image_data.get("product", "")
+                )
+                self._set_cached(image_bytes)
+                # build full animation in background
+                self.hass.loop.create_task(self._build_animation_with_jitter())
+            except Exception as err:  # pragma: no cover - best effort
+                _LOGGER.error("%s: initial animation fetch failed: %s", self.name, err)
+                raise
             return image_bytes
 
-        _LOGGER.debug("%s: refreshing full animation", self.name)
-        image_bytes = await self.coordinator.api.async_load_animation(
-            self.image_data["product"]
-        )
-        self._set_cached(image_bytes)
+        try:
+            _LOGGER.debug("%s: refreshing full animation", self.name)
+            image_bytes = await self.coordinator.api.async_load_animation(
+                self.image_data.get("product", "")
+            )
+            self._set_cached(image_bytes)
+        except Exception as err:  # pragma: no cover - best effort
+            _LOGGER.error("%s: animation refresh failed: %s", self.name, err)
+            raise
         return image_bytes
 
     async def _build_animation_with_jitter(self):
