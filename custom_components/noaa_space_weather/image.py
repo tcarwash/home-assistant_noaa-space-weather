@@ -119,6 +119,21 @@ async def async_setup_entry(hass, entry, async_add_entities):
     ]
     async_add_entities(entities, update_before_add=True)
 
+    # Kick off a background prefetch of all animations so they are ready shortly after setup
+    try:
+        products = [a.get("product", "") for a in animationmap if a.get("product")]
+        if products:
+            hass.loop.create_task(
+                coordinator.api.async_prefetch_animations(
+                    products, concurrency=3, per_item_timeout=90.0
+                )
+            )
+            _LOGGER.debug(
+                "Started background prefetch for %d animations", len(products)
+            )
+    except Exception as err:  # pragma: no cover - best effort
+        _LOGGER.debug("Unable to start animation prefetch: %s", err)
+
 
 class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
     """Animated image entity built from product frames."""
@@ -137,13 +152,23 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         )
         self._attr_icon = self.image_data.get("icon", ICON)
 
-        self._jitter = random.uniform(2, 15)
+        self._jitter = random.uniform(2, 30)
         self._raw_bytes: bytes | None = None
 
     async def async_update(self):
         """Fetch/refresh animation bytes."""
         image_bytes = b""
         if not self._raw_bytes:
+            # If a background prefetch has already warmed this animation, use it immediately
+            try:
+                cached = self.coordinator.api.get_cached_animation(
+                    self.image_data.get("product", "")
+                )
+            except Exception:
+                cached = None
+            if cached:
+                self._set_cached(cached)
+                return cached
             _LOGGER.debug("%s: fetching first frame", self.name)
             try:
                 image_bytes = await self.coordinator.api.async_get_first_frame(
