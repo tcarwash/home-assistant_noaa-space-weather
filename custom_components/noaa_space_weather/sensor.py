@@ -1,8 +1,15 @@
 """Sensor platform for NOAA Space Weather."""
 
-from .const import DOMAIN
-from .const import ICON
+from .const import (
+    DOMAIN,
+    ICON,
+    CONF_LEGACY_NAMING,
+    DEFAULT_LEGACY_NAMING,
+    NAME_PREFIX,
+)
 from .entity import NoaaSpaceWeatherEntity
+from homeassistant.util import slugify
+from homeassistant.helpers import entity_registry as er
 
 
 def sfi_return(coordinator):
@@ -129,13 +136,23 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
     def __init__(self, coordinator, entry, sensor):
         self.sensor = sensor
         super().__init__(coordinator, entry)
+        # unique id using existing scheme
+        self._attr_unique_id = f"swpc {self.sensor['name']}"
+        # Keep display name unchanged (legacy/human-friendly)
+        self._attr_name = self.sensor["desc"]
+        self._attr_icon = self.sensor.get("icon", ICON)
+        self._attr_device_class = self.sensor.get(
+            "device_class", "noaa_space_weather__custom_device_class"
+        )
 
     @property
     def state_class(self):
         return self.sensor.get("state_class", "measurement")
 
+    # Hass core expects _attr_native_unit_of_measurement or legacy unit_of_measurement;
+    # keep property but suppress type issues via dynamic behavior
     @property
-    def unit_of_measurement(self):
+    def unit_of_measurement(self):  # type: ignore[override]
         return self.sensor.get("unit", "")
 
     @property
@@ -143,7 +160,7 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
         return self.sensor.get("options", None)
 
     @property
-    def state(self):
+    def state(self):  # type: ignore[override]
         """Return the state of the sensor."""
         if self.coordinator.data:
             data = self.sensor["data"](self.coordinator)
@@ -151,32 +168,44 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
         else:
             return None
 
-    @property
-    def unique_id(self):
-        return f"swpc {self.sensor['name']}"
+    # unique_id and name provided via _attr_* in __init__
 
     @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self.sensor["desc"]
+    def suggested_object_id(self) -> str:  # guides entity_id creation
+        base = slugify(self.sensor["desc"]) or slugify(self.sensor["name"]) or "sensor"
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+        )
+        return base if legacy else f"{NAME_PREFIX}{base}"
 
     @property
-    def available(self):
-        """Return the state of the sensor."""
+    def available(self):  # type: ignore[override]
+        """Always available if coordinator is present."""
         return True
 
     @property
-    def icon(self):
-        """Return the icon of the sensor."""
-        try:
-            icon = self.sensor["icon"]
-        except KeyError:
-            icon = ICON
-        return icon
+    def icon(self):  # type: ignore[override]
+        return self._attr_icon
 
     @property
-    def device_class(self):
-        """Return the device class of the sensor."""
-        return self.sensor.get(
-            "device_class", "noaa_space_weather__custom_device_class"
+    def device_class(self):  # type: ignore[override]
+        return self._attr_device_class
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
         )
+        if legacy:
+            return
+        registry = er.async_get(self.hass)
+        entry = registry.async_get(self.entity_id)
+        if not entry:
+            return
+        object_id = entry.entity_id.split(".", 1)[1]
+        if object_id.startswith(NAME_PREFIX):
+            return
+        new_object_id = self.suggested_object_id
+        new_entity_id = f"{entry.domain}.{new_object_id}"
+        if registry.async_get(new_entity_id) is None:
+            registry.async_update_entity(entry.entity_id, new_entity_id=new_entity_id)

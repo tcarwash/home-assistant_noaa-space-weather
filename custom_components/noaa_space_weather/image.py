@@ -6,8 +6,10 @@ import random
 from datetime import datetime
 
 from homeassistant.core import callback
+from homeassistant.util import slugify
+from homeassistant.helpers import entity_registry as er
 
-from .const import DOMAIN, ICON
+from .const import DOMAIN, ICON, CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING, NAME_PREFIX
 from .entity import NoaaSpaceWeatherImageEntity
 
 
@@ -146,7 +148,9 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
         # Prefer attribute fields to avoid overriding typed properties on Entity
         self._attr_unique_id = f"swpc {self.image_data.get('name')}"
-        self._attr_name = self.image_data.get("name")
+        base = self.image_data.get("name")
+        # Keep display name human-friendly; entity_id will be prefixed via suggested_object_id
+        self._attr_name = base
         self._attr_device_class = (
             f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
         )
@@ -154,6 +158,7 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
         self._jitter = random.uniform(2, 30)
         self._raw_bytes: bytes | None = None
+
 
     async def async_update(self):
         """Fetch/refresh animation bytes."""
@@ -235,6 +240,34 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         return self._raw_bytes or await self.async_update()
 
 
+    @property
+    def suggested_object_id(self) -> str:
+        base = slugify(self.image_data.get("name") or "image")
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+        )
+        return base if legacy else f"{NAME_PREFIX}{base}"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+        )
+        if legacy:
+            return
+        registry = er.async_get(self.hass)
+        entry = registry.async_get(self.entity_id)
+        if not entry:
+            return
+        object_id = entry.entity_id.split(".", 1)[1]
+        if object_id.startswith(NAME_PREFIX):
+            return
+        new_object_id = self.suggested_object_id
+        new_entity_id = f"{entry.domain}.{new_object_id}"
+        if registry.async_get(new_entity_id) is None:
+            registry.async_update_entity(entry.entity_id, new_entity_id=new_entity_id)
+
+
 class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
     """Static image entity served directly from remote URL."""
 
@@ -245,7 +278,9 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
         super().__init__(coordinator, entry)
 
         self._attr_unique_id = f"swpc {self.image_data.get('name')}"
-        self._attr_name = self.image_data.get("name")
+        base = self.image_data.get("name")
+        # Keep display name human-friendly; entity_id will be prefixed via suggested_object_id
+        self._attr_name = base
         self._attr_image_url = self.image_data.get("image_url")
         self._attr_device_class = (
             f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
@@ -257,3 +292,31 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
         self.image_last_updated = datetime.now()
         self._attr_image_last_updated = self.image_last_updated
         self.async_write_ha_state()
+
+    @property
+    def suggested_object_id(self) -> str:
+        base = slugify(self.image_data.get("name") or "image")
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+        )
+        return base if legacy else f"{NAME_PREFIX}{base}"
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+        )
+        if legacy:
+            return
+        registry = er.async_get(self.hass)
+        entry = registry.async_get(self.entity_id)
+        if not entry:
+            return
+        object_id = entry.entity_id.split(".", 1)[1]
+        if object_id.startswith(NAME_PREFIX):
+            return
+        new_object_id = self.suggested_object_id
+        new_entity_id = f"{entry.domain}.{new_object_id}"
+        if registry.async_get(new_entity_id) is None:
+            registry.async_update_entity(entry.entity_id, new_entity_id=new_entity_id)
+
