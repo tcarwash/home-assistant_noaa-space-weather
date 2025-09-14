@@ -189,7 +189,7 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         try:
             _LOGGER.debug("%s: refreshing full animation", self.name)
             image_bytes = await self.coordinator.api.async_load_animation(
-                self.image_data.get("product", "")
+                self.image_data.get("product", ""), bypass_cache=True
             )
             self._set_cached(image_bytes)
         except Exception as err:  # pragma: no cover - best effort
@@ -201,7 +201,7 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         try:
             await asyncio.sleep(self._jitter)
             image_bytes = await self.coordinator.api.async_load_animation(
-                self.image_data["product"]
+                self.image_data["product"], bypass_cache=True
             )
             self._set_cached(image_bytes)
             self.async_write_ha_state()

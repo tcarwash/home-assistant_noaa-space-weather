@@ -104,11 +104,17 @@ class NoaaSpaceWeatherApiClient:
             pass
         return b""
 
-    async def async_load_animation(self, product) -> bytes:
-        """Return bytes for an animated GIF or a single image if only one frame exists."""
-        # Serve from cache if available
+    async def async_load_animation(
+        self, product, *, bypass_cache: bool = False
+    ) -> bytes:
+        """Return bytes for an animated GIF or a single image if only one frame exists.
+
+        bypass_cache: when True, do not short-circuit on the in-memory cache. We'll
+        still update the cache with any freshly built data.
+        """
+        # Serve from cache if available (unless bypassing)
         cached = self.get_cached_animation(product)
-        if cached:
+        if cached and not bypass_cache:
             return cached
 
         url = self._resolve_url(product)
