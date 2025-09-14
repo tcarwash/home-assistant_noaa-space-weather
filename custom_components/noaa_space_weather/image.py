@@ -159,7 +159,6 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         self._jitter = random.uniform(2, 30)
         self._raw_bytes: bytes | None = None
 
-
     async def async_update(self):
         """Fetch/refresh animation bytes."""
         image_bytes = b""
@@ -238,7 +237,6 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
     async def async_image(self):
         return self._raw_bytes or await self.async_update()
-
 
     @property
     def suggested_object_id(self) -> str:
@@ -319,4 +317,3 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
         new_entity_id = f"{entry.domain}.{new_object_id}"
         if registry.async_get(new_entity_id) is None:
             registry.async_update_entity(entry.entity_id, new_entity_id=new_entity_id)
-
