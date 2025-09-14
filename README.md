@@ -23,7 +23,6 @@ This project is community-maintained and not affiliated with NOAA.
 - Image entities for static SWPC products
 - Animation/image entities for SUVI, LASCO, Geospace, Ovation aurora, and more
 - UI-only setup with an option to keep legacy entity IDs
-- Smart prefetch and caching to speed up animations
 
 ### Platforms
 
@@ -125,11 +124,11 @@ Entities card with key sensors:
 ```yaml
 type: entities
 entities:
-	- sensor.noaasw_planetary_k_index
-	- sensor.noaasw_solar_flux_index
-	- sensor.noaasw_sunspot_number
-	- sensor.noaasw_x_class_1_day_probability
-	- sensor.noaasw_m_class_1_day_probability
+  - sensor.noaasw_planetary_k_index
+  - sensor.noaasw_solar_flux_index
+  - sensor.noaasw_sunspot_number
+  - sensor.noaasw_x_class_1_day_probability
+  - sensor.noaasw_m_class_1_day_probability
 ```
 
 Note: Exact entity IDs depend on your naming option (legacy vs. prefixed) and may vary slightly if Home Assistant adjusts slugs.
