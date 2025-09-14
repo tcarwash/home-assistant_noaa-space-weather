@@ -11,74 +11,143 @@
 [![Project Maintenance][maintenance-shield]][user_profile]
 [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
 
-A (non-official) home assistant integration for the NOAA Space Weather Prediction Center API.
+A Home Assistant custom integration for the NOAA Space Weather Prediction Center (SWPC).
 
-_Neither this integration nor it's developer have any affiliation with NOAA._
-
-**This component will set up the following platforms.**
-
-| Platform | Description                            |
-| -------- | -------------------------------------- |
-| `sensor` | Show info from NOAA Space Weather API. |
-
-**These sensors are currently available**
-| Sensor | Description |
-| ----------------------------------------- | ---------------------------------------------- |
-| `sensor.ssn` | Current Sunspot Number. |
-| `sensor.solar_flux_index` | Current Solar Flux Index. |
-| `sensor.planetary_k_index` | Current Planetary K-Index. |
-| `sensor.a_index` | Predicted A-Index. |
-| `sensor.a_index_2_day` | Predicted 2-Day A-Index. |
-| `sensor.a_index_3_day` | Predicted 3-Day A-Index. |
-| `sensor.polar_cap_absorption` | A color-scale indication of polar cap absorption |
-| `sensor.x_class_1_day_probability` | Probability of an X-Class flare within one day.|
-| `sensor.m_class_1_day_probability` | Probability of an M-Class flare within one day.|
+This project is community-maintained and not affiliated with NOAA.
 
 ![example][exampleimg]
 
+## Features
+
+- Sensors for common space-weather indices and probabilities
+- Image entities for static SWPC products
+- Animation/image entities for SUVI, LASCO, Geospace, Ovation aurora, and more
+- UI-only setup with an option to keep legacy entity IDs
+- Smart prefetch and caching to speed up animations
+
+### Platforms
+
+- sensor: numeric indices and probabilities
+- image: static images and animated products (GIFs)
+
+### Available sensors
+
+The following sensors are created (names shown are the friendly names):
+
+- Solar Flux Index
+- A Index
+- A Index 2 Day
+- A Index 3 Day
+- Planetary K-Index (uses estimated Kp when available)
+- Sunspot Number
+- Polar Cap Absorption
+- X-Class 1 Day Probability
+- M-Class 1 Day Probability
+
+Entity IDs are derived from the friendly names. By default they include a prefix `noaasw_` (configurable, see Options below). For example:
+
+- sensor.noaasw_solar_flux_index
+- sensor.noaasw_planetary_k_index
+- sensor.noaasw_sunspot_number
+
+If you enable Legacy naming, the prefix is removed (e.g., `sensor.solar_flux_index`).
+
+### Image and animation entities
+
+The integration exposes several image entities (domain: `image`). Animated products render as GIFs when possible and fall back to a static frame if needed.
+
+Animated products include:
+
+- Animated SUVI Secondary 284 Å
+- Animated SUVI Primary 171 Å
+- Animated SUVI Primary 304 Å
+- Animated SUVI Thematic Map
+- Animated WFS Ionosphere
+- Animated Coronagraph CCOR1
+- Animated Lasco C2
+- Animated Lasco C3
+- Animated Geospace Magnetosphere Velocity
+- Animated Geospace Magnetosphere Density
+- Animated Geospace Magnetosphere Pressure
+- Animated Aurora Forecast North (24h)
+- Animated Aurora Forecast South (24h)
+- Animated Geoelectric Field US-Canada (1D)
+
+Static image products include:
+
+- ACE Solar Wind (3 hour)
+- Today's forecasted aurora viewline (experimental)
+- Tomorrow's forecasted aurora viewline (experimental)
+
+Tip: Use the Picture Entity or Image card in Lovelace to display these.
+
 ## Installation
 
-1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
-2. If you do not have a `custom_components` directory (folder) there, you need to create it.
-3. In the `custom_components` directory (folder) create a new folder called `noaa_space_weather`.
-4. Download _all_ the files from the `custom_components/noaa_space_weather/` directory (folder) in this repository.
-5. Place the files you downloaded in the new directory (folder) you created.
-6. Restart Home Assistant
-7. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "NOAA Space Weather"
+### HACS (Custom Repository)
 
-Using your HA configuration directory (folder) as a starting point you should now also have this:
+1. In HACS, go to Integrations → three-dots menu → Custom repositories
+2. Add this repository URL and select category “Integration”
+3. Install “NOAA Space Weather” from HACS
+4. Restart Home Assistant
+5. Add the integration in Settings → Devices & Services → Add Integration → search “NOAA Space Weather”
 
-```text
-custom_components/noaa_space_weather/translations/en.json
-custom_components/noaa_space_weather/translations/fr.json
-custom_components/noaa_space_weather/translations/nb.json
-custom_components/noaa_space_weather/translations/sensor.en.json
-custom_components/noaa_space_weather/translations/sensor.fr.json
-custom_components/noaa_space_weather/translations/sensor.nb.json
-custom_components/noaa_space_weather/translations/sensor.nb.json
-custom_components/noaa_space_weather/__init__.py
-custom_components/noaa_space_weather/api.py
-custom_components/noaa_space_weather/binary_sensor.py
-custom_components/noaa_space_weather/config_flow.py
-custom_components/noaa_space_weather/const.py
-custom_components/noaa_space_weather/manifest.json
-custom_components/noaa_space_weather/sensor.py
-custom_components/noaa_space_weather/switch.py
+### Manual
+
+1. Open your Home Assistant config directory (where `configuration.yaml` lives)
+2. Create `custom_components/noaa_space_weather/` if it doesn’t exist
+3. Copy the contents of `custom_components/noaa_space_weather/` from this repo into that folder
+4. Restart Home Assistant
+5. Add the integration via Settings → Devices & Services
+
+## Configuration (UI)
+
+During setup you can choose:
+
+- Legacy naming: When enabled, entity IDs won’t be prefixed. This helps preserve older dashboards/automations; when disabled (default), entity IDs are prefixed with `noaasw_` to avoid conflicts.
+
+You can change this later under the integration’s Options.
+
+## Using the entities
+
+Example Lovelace snippets:
+
+Picture Entity showing an animated product:
+
+```yaml
+type: picture-entity
+entity: image.noaasw_animated_suvi_primary_171_angstroms
+show_state: false
+show_name: true
 ```
 
-## Configuration is done in the UI
+Entities card with key sensors:
 
-<!---->
+```yaml
+type: entities
+entities:
+	- sensor.noaasw_planetary_k_index
+	- sensor.noaasw_solar_flux_index
+	- sensor.noaasw_sunspot_number
+	- sensor.noaasw_x_class_1_day_probability
+	- sensor.noaasw_m_class_1_day_probability
+```
 
-## Contributions are welcome!
+Note: Exact entity IDs depend on your naming option (legacy vs. prefixed) and may vary slightly if Home Assistant adjusts slugs.
 
-If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+## Troubleshooting
+
+- Animations take a bit to appear: Frames are prefetched and cached after setup; a static first frame may show before the full GIF is ready.
+- Some products can be slow or occasionally unavailable from SWPC. The integration falls back gracefully.
+- If entity IDs changed after upgrading, toggle Legacy naming in Options, or update dashboards to the new prefixed IDs.
+
+## Contributions
+
+PRs and issues are welcome. See the [Contribution guidelines](CONTRIBUTING.md).
 
 ## Credits
 
-This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.
-
-Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [integration_blueprint][integration_blueprint] template
+- Built on top of the amazing [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component)
+- Inspired by [integration_blueprint][integration_blueprint]
 
 ---
 
