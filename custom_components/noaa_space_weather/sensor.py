@@ -9,6 +9,7 @@ from .const import (
 )
 from .entity import NoaaSpaceWeatherEntity
 from homeassistant.util import slugify
+from homeassistant.helpers import entity_registry as er
 
 
 def sfi_return(coordinator):
@@ -189,3 +190,22 @@ class NoaaSpaceWeatherSensor(NoaaSpaceWeatherEntity):
     @property
     def device_class(self):  # type: ignore[override]
         return self._attr_device_class
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        legacy = self.config_entry.options.get(
+            CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+        )
+        if legacy:
+            return
+        registry = er.async_get(self.hass)
+        entry = registry.async_get(self.entity_id)
+        if not entry:
+            return
+        object_id = entry.entity_id.split(".", 1)[1]
+        if object_id.startswith(NAME_PREFIX):
+            return
+        new_object_id = self.suggested_object_id
+        new_entity_id = f"{entry.domain}.{new_object_id}"
+        if registry.async_get(new_entity_id) is None:
+            registry.async_update_entity(entry.entity_id, new_entity_id=new_entity_id)
