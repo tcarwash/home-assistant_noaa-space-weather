@@ -1,9 +1,16 @@
 {
-  "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12",
+  "image": "ghcr.io/home-assistant/devcontainer:addons",
   "name": "NOAA Space Weather integration development",
-  "postCreateCommand": "scripts/setup",
-  "postStartCommand": "hass --config /workspaces/home-assistant_noaa-space-weather/config/",
-  "forwardPorts": [8123],
+  "postCreateCommand": "bash scripts/devcontainer_first_start.sh",
+  "postStartCommand": "bash devcontainer_bootstrap",
+  "appPort": ["7123:8123", "7357:4357"],
+  "forwardPorts": [8123, 4357],
+  "runArgs": ["-e", "GIT_EDITOR=code --wait", "--privileged"],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "workspaceMount": "source=${localWorkspaceFolder},target=${containerWorkspaceFolder},type=bind,consistency=cached",
+  "containerEnv": {
+    "WORKSPACE_DIRECTORY": "${containerWorkspaceFolder}"
+  },
   "portsAttributes": {
     "8123": {
       "label": "Home Assistant"
@@ -18,12 +25,6 @@
     }
   },
   "customizations": {
-    "extensions": [
-      "ms-python.python",
-      "github.vscode-pull-request-github",
-      "ryanluker.vscode-coverage-gutters",
-      "ms-python.vscode-pylance"
-    ],
     "vscode": {
       "settings": {
         "python.defaultInterpreterPath": "/usr/local/bin/python",
@@ -50,16 +51,23 @@
         "files.trimTrailingWhitespace": true
       },
       "extensions": [
-        "github.vscode-pull-request-github",
         "ms-python.python",
         "ms-python.vscode-pylance",
+        "redhat.vscode-yaml",
+        "keesschollaart.vscode-home-assistant",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        "EditorConfig.EditorConfig",
+        "DavidAnson.vscode-markdownlint",
         "ms-vscode.makefile-tools",
         "ryanluker.vscode-coverage-gutters"
       ]
     }
   },
   "remoteUser": "vscode",
-  "features": {
-    "rust": "latest"
-  }
+  "mounts": [
+    "type=volume,target=/var/lib/docker",
+    "type=volume,target=/mnt/supervisor"
+  ]
 }

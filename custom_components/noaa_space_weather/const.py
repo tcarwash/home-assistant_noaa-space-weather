@@ -19,7 +19,8 @@ ICON = "mdi:weather-sunny"
 BINARY_SENSOR = "binary_sensor"
 SENSOR = "sensor"
 SWITCH = "switch"
-PLATFORMS = [SENSOR]
+# Load both sensors and images
+PLATFORMS = [SENSOR, "image"]
 
 
 # Configuration and options

@@ -1,15 +1,39 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
+# Move to repo root
 cd "$(dirname "$0")/.."
 
+# Resolve workspace directory inside container (fallback to current repo path)
+WS_DIR="${WORKSPACE_DIRECTORY:-$(pwd)}"
+CFG_DIR="${WS_DIR}/config"
+CC_DIR="${CFG_DIR}/custom_components"
+DOMAIN="noaa_space_weather"
+
+# Ensure base tooling
 scripts/install/pip_packages "pip"
 scripts/install/pip_packages setuptools wheel
 scripts/install/core
-rm -rf /workspaces/home-assistant_noaa-space-weather/config
-mkdir /workspaces/home-assistant_noaa-space-weather/config
-ln -s /workspaces/home-assistant_noaa-space-weather/.devcontainer/configuration.yaml /workspaces/home-assistant_noaa-space-weather/config/configuration.yaml
-hass --config $(pwd)/config --script ensure_config
-ln -s /workspaces/home-assistant_noaa-space-weather/custom_components /workspaces/home-assistant_noaa-space-weather/config/custom_components
+
+# Prepare config directory without wiping existing contents
+mkdir -p "${CFG_DIR}"
+
+# Link configuration.yaml from devcontainer if not present
+if [ ! -e "${CFG_DIR}/configuration.yaml" ]; then
+	ln -s "${WS_DIR}/.devcontainer/configuration.yaml" "${CFG_DIR}/configuration.yaml"
+fi
+
+# Ensure HA baseline files
+hass --config "${CFG_DIR}" --script ensure_config
+
+# Symlink only this integration under config/custom_components
+mkdir -p "${CC_DIR}"
+if [ ! -e "${CC_DIR}/${DOMAIN}" ]; then
+	ln -s "${WS_DIR}/custom_components/${DOMAIN}" "${CC_DIR}/${DOMAIN}"
+fi
+
+# Dev dependencies
 scripts/install/dev
+
+echo "Setup complete. Config: ${CFG_DIR} | Custom component linked: ${CC_DIR}/${DOMAIN}"
