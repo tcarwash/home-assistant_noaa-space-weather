@@ -27,7 +27,14 @@ def ai_3d_return(coordinator):
 
 def kpi_return(coordinator):
     if not coordinator.data.get("kp_index_data") is None:
-        return coordinator.data.get("kp_index_data", {}).get("kp_index")
+        kp = coordinator.data.get("kp_index_data", {})
+        # Prefer fractional estimated Kp (e.g., 2.67) when available;
+        # fall back to integer Kp if that's all we have.
+        return (
+            kp.get("estimated_kp")
+            if kp.get("estimated_kp") is not None
+            else kp.get("kp_index")
+        )
 
 
 def ssn_return(coordinator):
