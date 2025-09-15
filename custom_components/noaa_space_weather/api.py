@@ -10,6 +10,8 @@ can be warmed in the background without blocking config entry setup.
 
 import logging
 from io import BytesIO
+import json
+import time
 import asyncio
 
 import aiohttp
@@ -125,28 +127,44 @@ class NoaaSpaceWeatherApiClient:
                 self.set_cached_animation(product, data)
             return data
 
-        # JSON source → try library first, then manual JSON walk
+        # JSON source → try library first (unless bypassing), then manual JSON walk
         if self._is_json_index(product):
-            try:
-                data = await self.swpc.gen_gif(product)
-                if data:
-                    self.set_cached_animation(product, data)
-                return data
-            except Exception:
-                pass
+            if not bypass_cache:
+                try:
+                    data = await self.swpc.gen_gif(product)
+                    if data:
+                        self.set_cached_animation(product, data)
+                    return data
+                except Exception:
+                    pass
 
-            # Manual JSON build as fallback
+            # Manual JSON build (either due to bypass or library failure)
             try:
-                response_json = await self.swpc.get_data_method(product)
-                frame_urls = [f.get("url") for f in response_json if f.get("url")]
+                url_json = self._resolve_url(product)
+                # Cache buster to avoid upstream/CDN stale content
+                ts = int(time.time())
+                url_json_busted = f"{url_json}{'&' if '?' in url_json else '?'}_ts={ts}"
+                json_text = await self._fetch_text(url_json_busted)
+                response_json = json.loads(json_text)
+                frame_urls = [
+                    f.get("url")
+                    for f in response_json
+                    if isinstance(f, dict) and f.get("url")
+                ]
                 max_frames = 50
                 if len(frame_urls) > max_frames:
                     frame_urls = frame_urls[-max_frames:]
+                _LOGGER.debug(
+                    "%s frames in %s (cap=%s)", len(frame_urls), product, max_frames
+                )
 
-                images = []
+                images: list[bytes] = []
                 for u in frame_urls:
                     try:
-                        images.append(await self.swpc.get_bytes_method(u))
+                        # Add a tiny cache buster to each frame URL as well
+                        u_abs = self._resolve_url(str(u))
+                        u_abs = f"{u_abs}{'&' if '?' in u_abs else '?'}_ts={ts}"
+                        images.append(await self._fetch_bytes(u_abs))
                     except Exception:
                         pass
 
@@ -190,8 +208,10 @@ class NoaaSpaceWeatherApiClient:
                 if data:
                     self.set_cached_animation(product, data)
                 return data
-            except Exception:
-                pass
+            except Exception as err:
+                _LOGGER.debug(
+                    "manual JSON animation build failed for %s: %s", product, err
+                )
 
         # Non-JSON or last resort — rely on library
         try:

@@ -157,7 +157,9 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         self._attr_icon = self.image_data.get("icon", ICON)
 
         self._jitter = random.uniform(2, 30)
-        self._raw_bytes: bytes | None = None
+        self._raw_bytes = None
+        # Throttle on-demand rebuilds to avoid rebuilding the GIF on every request
+        self._min_refresh_seconds = 300  # 5 minutes
 
     async def async_update(self):
         """Fetch/refresh animation bytes."""
@@ -192,6 +194,8 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
                 self.image_data.get("product", ""), bypass_cache=True
             )
             self._set_cached(image_bytes)
+            # Notify frontend that content changed (updates cache-busting timestamp)
+            self.async_write_ha_state()
         except Exception as err:  # pragma: no cover - best effort
             _LOGGER.error("%s: animation refresh failed: %s", self.name, err)
             raise
@@ -236,7 +240,21 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         self.async_write_ha_state()
 
     async def async_image(self):
-        return self._raw_bytes or await self.async_update()
+        # If we have never built bytes, build now
+        if not self._raw_bytes:
+            return await self.async_update()
+
+        # If it's been a while since last build, proactively refresh so the
+        # animation evolves over time even without a coordinator tick
+        try:
+            if self.image_last_updated:
+                age = (datetime.now() - self.image_last_updated).total_seconds()
+                if age >= self._min_refresh_seconds:
+                    return await self.async_update()
+        except Exception:  # pragma: no cover - best effort
+            pass
+
+        return self._raw_bytes
 
     @property
     def suggested_object_id(self) -> str:
