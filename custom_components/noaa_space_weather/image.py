@@ -3,7 +3,8 @@
 import asyncio
 import logging
 import random
-from datetime import datetime
+
+from homeassistant.util import dt as dt_util
 
 from homeassistant.core import callback
 from homeassistant.util import slugify
@@ -146,10 +147,8 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         self.coordinator = coordinator
         super().__init__(coordinator, entry)
 
-        # Prefer attribute fields to avoid overriding typed properties on Entity
         self._attr_unique_id = f"swpc {self.image_data.get('name')}"
         base = self.image_data.get("name")
-        # Keep display name human-friendly; entity_id will be prefixed via suggested_object_id
         self._attr_name = base
         self._attr_device_class = (
             f"noaa_space_weather__{self.image_data.get('device_class', 'image')}"
@@ -158,14 +157,12 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
         self._jitter = random.uniform(2, 30)
         self._raw_bytes = None
-        # Throttle on-demand rebuilds to avoid rebuilding the GIF on every request
         self._min_refresh_seconds = 300  # 5 minutes
+        self._build_task = None
 
     async def async_update(self):
-        """Fetch/refresh animation bytes."""
         image_bytes = b""
         if not self._raw_bytes:
-            # If a background prefetch has already warmed this animation, use it immediately
             try:
                 cached = self.coordinator.api.get_cached_animation(
                     self.image_data.get("product", "")
@@ -181,9 +178,8 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
                     self.image_data.get("product", "")
                 )
                 self._set_cached(image_bytes)
-                # build full animation in background
-                self.hass.loop.create_task(self._build_animation_with_jitter())
-            except Exception as err:  # pragma: no cover - best effort
+                self._schedule_build()
+            except Exception as err:  # pragma: no cover
                 _LOGGER.error("%s: initial animation fetch failed: %s", self.name, err)
                 raise
             return image_bytes
@@ -194,24 +190,41 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
                 self.image_data.get("product", ""), bypass_cache=True
             )
             self._set_cached(image_bytes)
-            # Notify frontend that content changed (updates cache-busting timestamp)
             self.async_write_ha_state()
-        except Exception as err:  # pragma: no cover - best effort
+        except Exception as err:  # pragma: no cover
             _LOGGER.error("%s: animation refresh failed: %s", self.name, err)
             raise
         return image_bytes
 
     async def _build_animation_with_jitter(self):
         try:
-            await asyncio.sleep(self._jitter)
+            try:
+                await asyncio.sleep(self._jitter)
+            except asyncio.CancelledError:  # pragma: no cover
+                _LOGGER.debug("%s: background animation build cancelled", self.name)
+                return
             image_bytes = await self.coordinator.api.async_load_animation(
                 self.image_data["product"], bypass_cache=True
             )
             self._set_cached(image_bytes)
             self.async_write_ha_state()
-            _LOGGER.debug("%s: background animation ready", self.name)
-        except Exception as err:  # pragma: no cover - best effort
+            _LOGGER.debug(
+                "%s: background animation ready (size=%d)", self.name, len(image_bytes)
+            )
+        except Exception as err:  # pragma: no cover
             _LOGGER.debug("%s: background animation failed: %s", self.name, err)
+        finally:
+            self._build_task = None
+
+    def _schedule_build(self):
+        if self._build_task and not self._build_task.done():
+            _LOGGER.debug(
+                "%s: build already in progress; skipping new schedule", self.name
+            )
+            return
+        self._build_task = self.hass.loop.create_task(
+            self._build_animation_with_jitter()
+        )
 
     def _detect_mime(self, data: bytes) -> str:
         if len(data) >= 4:
@@ -225,35 +238,43 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
     def _set_cached(self, image_bytes: bytes) -> None:
         self._raw_bytes = image_bytes
-        self.image_last_updated = datetime.now()
+        self.image_last_updated = dt_util.utcnow()
         self._attr_image_last_updated = self.image_last_updated
         try:
             self._attr_content_type = self._detect_mime(image_bytes)
-        except Exception:  # pragma: no cover - best effort
+        except Exception:  # pragma: no cover
             self._attr_content_type = "application/octet-stream"
 
     @callback
     def _handle_coordinator_update(self):
-        self.image_last_updated = datetime.now()
+        self.image_last_updated = dt_util.utcnow()
         self._attr_image_last_updated = self.image_last_updated
-        self.hass.loop.create_task(self._build_animation_with_jitter())
+        self._schedule_build()
         self.async_write_ha_state()
 
     async def async_image(self):
-        # If we have never built bytes, build now
         if not self._raw_bytes:
             return await self.async_update()
-
-        # If it's been a while since last build, proactively refresh so the
-        # animation evolves over time even without a coordinator tick
         try:
             if self.image_last_updated:
-                age = (datetime.now() - self.image_last_updated).total_seconds()
+                age = (dt_util.utcnow() - self.image_last_updated).total_seconds()
                 if age >= self._min_refresh_seconds:
+                    _LOGGER.debug(
+                        "%s: image age %.1fs >= %ss threshold; refreshing",
+                        self.name,
+                        age,
+                        self._min_refresh_seconds,
+                    )
                     return await self.async_update()
-        except Exception:  # pragma: no cover - best effort
+                else:
+                    _LOGGER.debug(
+                        "%s: image age %.1fs < %ss threshold; serving cached",
+                        self.name,
+                        age,
+                        self._min_refresh_seconds,
+                    )
+        except Exception:  # pragma: no cover
             pass
-
         return self._raw_bytes
 
     @property
@@ -305,7 +326,7 @@ class NoaaSpaceWeatherImage(NoaaSpaceWeatherImageEntity):
 
     @callback
     def _handle_coordinator_update(self):
-        self.image_last_updated = datetime.now()
+        self.image_last_updated = dt_util.utcnow()
         self._attr_image_last_updated = self.image_last_updated
         self.async_write_ha_state()
 
