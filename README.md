@@ -90,6 +90,8 @@ Tip: Use the Picture Entity or Image card in Lovelace to display these.
 4. Restart Home Assistant
 5. Add the integration in Settings → Devices & Services → Add Integration → search “NOAA Space Weather”
 
+<<<<<<< HEAD
+
 ### Manual
 
 1. Open your Home Assistant config directory (where `configuration.yaml` lives)
@@ -112,12 +114,27 @@ Example Lovelace snippets:
 
 Picture Entity showing an animated product:
 
-```yaml
+````yaml
 type: picture-entity
 entity: image.noaasw_animated_suvi_primary_171_angstroms
 show_state: false
 show_name: true
-```
+=======
+```text
+custom_components/noaa_space_weather/translations/en.json
+custom_components/noaa_space_weather/translations/fr.json
+custom_components/noaa_space_weather/translations/nb.json
+custom_components/noaa_space_weather/translations/sv.json
+custom_components/noaa_space_weather/__init__.py
+custom_components/noaa_space_weather/api.py
+custom_components/noaa_space_weather/binary_sensor.py
+custom_components/noaa_space_weather/config_flow.py
+custom_components/noaa_space_weather/const.py
+custom_components/noaa_space_weather/manifest.json
+custom_components/noaa_space_weather/sensor.py
+custom_components/noaa_space_weather/switch.py
+>>>>>>> 604870215908b8c2f735dba5190982a8dcf08429
+````
 
 Entities card with key sensors:
 

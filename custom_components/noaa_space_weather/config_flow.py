@@ -37,7 +37,13 @@ class NoaaSpaceWeatherConfigFlow(ConfigFlow, domain=DOMAIN):
                 vol.Optional(CONF_LEGACY_NAMING, default=DEFAULT_LEGACY_NAMING): bool,
             }
         )
-        return self.async_show_form(step_id="user", data_schema=schema)
+        return self.async_show_form(
+            step_id="user",
+            description_placeholders={
+                "documentation_url": "https://github.com/tcarwash/home-assistant_noaa-space-weather"
+            },
+            data_schema=schema,
+        )
 
     async def async_step_import(self, user_input: dict[str, Any]) -> ConfigFlowResult:
         """Handle import from configuration.yaml."""

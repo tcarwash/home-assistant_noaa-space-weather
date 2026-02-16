@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "description": "Si vous avez besoin d'aide pour la configuration, regardez ici: https://github.com/tcarwash/home-assistant_noaa-space-weather"
+        "description": "Si vous avez besoin d'aide pour la configuration, regardez ici: {documentation_url}"
       }
     },
     "error": {

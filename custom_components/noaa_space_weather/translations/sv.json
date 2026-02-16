@@ -1,0 +1,24 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "Om du behöver hjälp med konfigurationen, läs här: {documentation_url}"
+      }
+    },
+    "error": {
+      "auth": "Användarnamn eller lösenord är felaktigt."
+    },
+    "abort": {
+      "single_instance_allowed": "Bara en instans är tillåten."
+    }
+  },
+  "options": {
+    "step": {
+      "user": {
+        "data": {
+          "sensor": "Sensorn är aktiverad"
+        }
+      }
+    }
+  }
+}
