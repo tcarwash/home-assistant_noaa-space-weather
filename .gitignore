@@ -6,3 +6,4 @@ venv
 .venv
 config/*
 swpclib/*
+.devcontainer/.cache/*
