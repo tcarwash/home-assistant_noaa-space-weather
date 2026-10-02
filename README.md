@@ -52,10 +52,7 @@ Using your HA configuration directory (folder) as a starting point you should no
 custom_components/noaa_space_weather/translations/en.json
 custom_components/noaa_space_weather/translations/fr.json
 custom_components/noaa_space_weather/translations/nb.json
-custom_components/noaa_space_weather/translations/sensor.en.json
-custom_components/noaa_space_weather/translations/sensor.fr.json
-custom_components/noaa_space_weather/translations/sensor.nb.json
-custom_components/noaa_space_weather/translations/sensor.nb.json
+custom_components/noaa_space_weather/translations/sv.json
 custom_components/noaa_space_weather/__init__.py
 custom_components/noaa_space_weather/api.py
 custom_components/noaa_space_weather/binary_sensor.py

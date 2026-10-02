@@ -26,7 +26,12 @@ class NoaaSpaceWeatherConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             return self.async_create_entry(title=DEFAULT_NAME, data={})
 
-        return self.async_show_form(step_id="user")
+        return self.async_show_form(
+            step_id="user",
+            description_placeholders={
+                "documentation_url": "https://github.com/tcarwash/home-assistant_noaa-space-weather"
+            },
+        )
 
     async def async_step_import(self, user_input: dict[str, Any]) -> FlowResult:
         """Handle import from configuration.yaml."""
