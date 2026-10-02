@@ -11,12 +11,11 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.core_config import Config
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import NoaaSpaceWeatherApiClient
 from .const import DOMAIN
@@ -30,7 +29,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 PLATFORM_SCHEMA = cv.platform_only_config_schema(DOMAIN)
 
 
-async def async_setup(hass: HomeAssistant, config: Config):
+async def async_setup(hass: HomeAssistant, config: ConfigType):
     """Set up this integration using YAML is not supported."""
     return True
 
@@ -44,7 +43,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     session = async_get_clientsession(hass)
     client = NoaaSpaceWeatherApiClient(session)
 
-    coordinator = NoaaSpaceWeatherDataUpdateCoordinator(hass, client=client)
+    coordinator = NoaaSpaceWeatherDataUpdateCoordinator(
+        hass, client=client, config_entry=entry
+    )
     await coordinator.async_refresh()
 
     if not coordinator.last_update_success:
@@ -69,12 +70,20 @@ class NoaaSpaceWeatherDataUpdateCoordinator(DataUpdateCoordinator):
         self,
         hass: HomeAssistant,
         client: NoaaSpaceWeatherApiClient,
+        config_entry: ConfigEntry,
     ) -> None:
         """Initialize."""
         self.api = client
         self.platforms = []
+        self.animation_prefetch_task = None
 
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
+        super().__init__(
+            hass,
+            _LOGGER,
+            config_entry=config_entry,
+            name=DOMAIN,
+            update_interval=SCAN_INTERVAL,
+        )
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -87,14 +96,15 @@ class NoaaSpaceWeatherDataUpdateCoordinator(DataUpdateCoordinator):
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
-    unloaded = all(
+    if coordinator.animation_prefetch_task:
+        coordinator.animation_prefetch_task.cancel()
         await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-                if platform in coordinator.platforms
-            ]
+            coordinator.animation_prefetch_task, return_exceptions=True
         )
+        coordinator.animation_prefetch_task = None
+
+    unloaded = await hass.config_entries.async_unload_platforms(
+        entry, coordinator.platforms
     )
     if unloaded:
         hass.data[DOMAIN].pop(entry.entry_id)

@@ -8,18 +8,17 @@ Also includes a tiny in-memory cache and a prefetch utility so animations
 can be warmed in the background without blocking config entry setup.
 """
 
-import logging
-from io import BytesIO
-import json
-import time
 import asyncio
+import json
+import logging
+import time
+from io import BytesIO
+from urllib.parse import urlsplit
 
 import aiohttp
 from swpclib import swpclib
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
-
-HEADERS = {"Content-type": "application/json; charset=UTF-8"}
 
 
 class NoaaSpaceWeatherApiClient:
@@ -40,16 +39,16 @@ class NoaaSpaceWeatherApiClient:
             return product
         # Default SWPC host for leading slash paths
         if product.startswith("/"):
-            return f"https://services.swpc.noaa.gov{product}"
+            return f"https://services.swpc.noaa.gov{product}"  # noqa: E231
         # Fallback: assume already a path usable by swpclib
         return product
 
     def _is_json_index(self, product: str) -> bool:
-        p = product.lower()
+        p = urlsplit(product).path.lower()
         return p.endswith(".json")
 
     def _is_single_image(self, product: str) -> bool:
-        p = product.lower()
+        p = urlsplit(product).path.lower()
         return p.endswith(".png") or p.endswith(".jpg") or p.endswith(".jpeg")
 
     # -------------------- HTTP helpers --------------------
@@ -88,22 +87,22 @@ class NoaaSpaceWeatherApiClient:
             _LOGGER.debug("first_frame: fetching single image %s", url)
             return await self._fetch_bytes(url)
 
-        # JSON index — use swpclib fast path
+        # Resolve JSON frame URLs through the shared Home Assistant session so
+        # relative and absolute NOAA URLs behave the same way.
         if self._is_json_index(product):
             try:
-                response_json = await self.swpc.get_data_method(product)
-                first_frame_url = response_json[0].get("url")
-                return await self.swpc.get_bytes_method(first_frame_url)
+                response_json = json.loads(
+                    await self._fetch_text(self._resolve_url(product))
+                )
+                first_frame_url = next(
+                    frame.get("url")
+                    for frame in response_json
+                    if isinstance(frame, dict) and frame.get("url")
+                )
+                return await self._fetch_bytes(self._resolve_url(first_frame_url))
             except Exception as err:
                 _LOGGER.debug("first_frame: JSON index path failed: %s", err)
 
-        # Last resort for non-JSON: attempt library to provide something
-        try:
-            gif_bytes = await self.swpc.gen_gif(product)
-            if gif_bytes:
-                return gif_bytes
-        except Exception:
-            pass
         return b""
 
     async def async_load_animation(
@@ -127,18 +126,10 @@ class NoaaSpaceWeatherApiClient:
                 self.set_cached_animation(product, data)
             return data
 
-        # JSON source → try library first (unless bypassing), then manual JSON walk
+        # JSON indexes are built through the shared session below. swpclib
+        # creates its own sessions and downloads frames sequentially, which
+        # bypasses Home Assistant's connection settings and can stall refreshes.
         if self._is_json_index(product):
-            if not bypass_cache:
-                try:
-                    data = await self.swpc.gen_gif(product)
-                    if data:
-                        self.set_cached_animation(product, data)
-                    return data
-                except Exception:
-                    pass
-
-            # Manual JSON build (either due to bypass or library failure)
             try:
                 url_json = self._resolve_url(product)
                 # Cache buster to avoid upstream/CDN stale content
@@ -158,15 +149,27 @@ class NoaaSpaceWeatherApiClient:
                     "%s frames in %s (cap=%s)", len(frame_urls), product, max_frames
                 )
 
-                images: list[bytes] = []
-                for u in frame_urls:
+                async def fetch_frame(frame_url: str) -> bytes | None:
                     try:
-                        # Add a tiny cache buster to each frame URL as well
-                        u_abs = self._resolve_url(str(u))
+                        u_abs = self._resolve_url(frame_url)
                         u_abs = f"{u_abs}{'&' if '?' in u_abs else '?'}_ts={ts}"
-                        images.append(await self._fetch_bytes(u_abs))
-                    except Exception:
-                        pass
+                        return await self._fetch_bytes(u_abs)
+                    except Exception as err:
+                        _LOGGER.debug(
+                            "Unable to fetch animation frame %s: %s", frame_url, err
+                        )
+                        return None
+
+                # Keep frame order while fetching concurrently; NOAA indexes can
+                # contain dozens of frames and serial downloads delay animation.
+                semaphore = asyncio.Semaphore(5)
+
+                async def fetch_limited(frame_url: str) -> bytes | None:
+                    async with semaphore:
+                        return await fetch_frame(frame_url)
+
+                results = await asyncio.gather(*(fetch_limited(u) for u in frame_urls))
+                images = [image for image in results if image]
 
                 if len(images) <= 1:
                     single = images[0] if images else b""
@@ -185,7 +188,9 @@ class NoaaSpaceWeatherApiClient:
                 pil_frames = []
                 for b in images:
                     try:
-                        pil_frames.append(Image.open(BytesIO(b)).convert("RGB"))
+                        frame = Image.open(BytesIO(b)).convert("RGB")
+                        frame.thumbnail((768, 768), Image.Resampling.LANCZOS)
+                        pil_frames.append(frame)
                     except Exception:
                         pass
                 if not pil_frames:
@@ -194,15 +199,32 @@ class NoaaSpaceWeatherApiClient:
                         self.set_cached_animation(product, data)
                     return data
 
+                # A shared palette keeps the GIF compact and avoids color
+                # shifts between frames caused by independent frame palettes.
+                sample_width = 32
+                palette_samples = Image.new(
+                    "RGB", (sample_width * len(pil_frames), sample_width)
+                )
+                for index, frame in enumerate(pil_frames):
+                    sample = frame.copy()
+                    sample.thumbnail((sample_width, sample_width))
+                    palette_samples.paste(sample, (index * sample_width, 0))
+                palette = palette_samples.quantize(colors=256)
+                gif_frames = [
+                    frame.quantize(palette=palette, dither=Image.Dither.NONE)
+                    for frame in pil_frames
+                ]
+
                 bio = BytesIO()
-                pil_frames[0].save(
+                gif_frames[0].save(
                     bio,
                     format="GIF",
                     save_all=True,
-                    append_images=pil_frames[1:],
+                    append_images=gif_frames[1:],
                     duration=150,
                     loop=0,
                     disposal=2,
+                    optimize=True,
                 )
                 data = bio.getvalue()
                 if data:
@@ -212,6 +234,7 @@ class NoaaSpaceWeatherApiClient:
                 _LOGGER.debug(
                     "manual JSON animation build failed for %s: %s", product, err
                 )
+                return b""
 
         # Non-JSON or last resort — rely on library
         try:

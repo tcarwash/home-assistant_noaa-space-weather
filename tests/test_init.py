@@ -1,65 +1,83 @@
-"""Test NOAA Space Weather setup process."""
+"""Test NOAA Space Weather setup and image platform lifecycle."""
 
-import pytest
-from custom_components.noaa_space_weather import (
-    async_reload_entry,
-)
-from custom_components.noaa_space_weather import (
-    async_setup_entry,
-)
-from custom_components.noaa_space_weather import (
-    async_unload_entry,
-)
-from custom_components.noaa_space_weather import (
-    NoaaSpaceWeatherDataUpdateCoordinator,
-)
-from custom_components.noaa_space_weather.const import (
-    DOMAIN,
-)
-from homeassistant.exceptions import ConfigEntryNotReady
+import base64
+from unittest.mock import AsyncMock, patch
+
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.helpers.entity_component import DATA_INSTANCES
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.noaa_space_weather import NoaaSpaceWeatherDataUpdateCoordinator
+from custom_components.noaa_space_weather.const import DOMAIN
 
-# We can pass fixtures as defined in conftest.py to tell pytest to use the fixture
-# for a given test. We can also leverage fixtures and mocks that are available in
-# Home Assistant using the pytest_homeassistant_custom_component plugin.
-# Assertions allow you to verify that the return value of whatever is on the left
-# side of the assertion matches with the right side.
+
 async def test_setup_unload_and_reload_entry(hass, bypass_get_data):
-    """Test entry setup and unload."""
-    # Create a mock entry so we don't have to go through config flow
-    config_entry = MockConfigEntry(domain=DOMAIN, data={}, entry_id="test")
+    """Test config entry setup, reload, and unload through Home Assistant."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={},
+        options={"sensor": False, "image": False},
+        entry_id="test",
+    )
+    config_entry.add_to_hass(hass)
 
-    # Set up the entry and assert that the values set during setup are where we expect
-    # them to be. Because we have patched the NoaaSpaceWeatherDataUpdateCoordinator.async_get_data
-    # call, no code from custom_components/noaa_space_weather/api.py actually runs.
-
-    assert await async_setup_entry(hass, config_entry)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
         type(hass.data[DOMAIN][config_entry.entry_id])
         is NoaaSpaceWeatherDataUpdateCoordinator
     )
 
-    # Reload the entry and assert that the data from above is still there
-    assert await async_reload_entry(hass, config_entry) is None
+    assert await hass.config_entries.async_reload(config_entry.entry_id)
     assert DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]
     assert (
         type(hass.data[DOMAIN][config_entry.entry_id])
         is NoaaSpaceWeatherDataUpdateCoordinator
     )
 
-    # Unload the entry and verify that the data has been removed
-    assert await async_unload_entry(hass, config_entry)
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
     assert config_entry.entry_id not in hass.data[DOMAIN]
 
 
 async def test_setup_entry_exception(hass, error_on_get_data):
-    """Test ConfigEntryNotReady when API raises an exception during entry setup."""
+    """Test that a failed initial update schedules a setup retry."""
     config_entry = MockConfigEntry(domain=DOMAIN, data={}, entry_id="test")
+    config_entry.add_to_hass(hass)
 
-    # In this case we are testing the condition where async_setup_entry raises
-    # ConfigEntryNotReady using the `error_on_get_data` fixture which simulates
-    # an error.
-    with pytest.raises(ConfigEntryNotReady):
-        assert await async_setup_entry(hass, config_entry)
+    assert not await hass.config_entries.async_setup(config_entry.entry_id)
+    assert config_entry.state is ConfigEntryState.SETUP_RETRY
+
+
+async def test_image_platform_loads_and_unloads(hass, bypass_get_data):
+    """Test image entity setup and background task cleanup on unload."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={},
+        options={"sensor": False},
+        entry_id="image-test",
+    )
+    config_entry.add_to_hass(hass)
+    first_frame = base64.b64decode(
+        "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+    )
+
+    with (
+        patch(
+            "custom_components.noaa_space_weather.api.NoaaSpaceWeatherApiClient.async_get_first_frame",
+            new=AsyncMock(return_value=first_frame),
+        ),
+        patch(
+            "custom_components.noaa_space_weather.api.NoaaSpaceWeatherApiClient.async_prefetch_animations",
+            new=AsyncMock(return_value=None),
+        ),
+    ):
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        image_ids = hass.states.async_entity_ids("image")
+        assert len(image_ids) == 17
+        animation_id = next(
+            entity_id for entity_id in image_ids if "animated" in entity_id
+        )
+        image_entity = hass.data[DATA_INSTANCES]["image"].get_entity(animation_id)
+        assert image_entity is not None
+        assert await image_entity.async_image() == first_frame
+        assert await hass.config_entries.async_unload(config_entry.entry_id)

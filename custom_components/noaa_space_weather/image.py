@@ -4,15 +4,13 @@ import asyncio
 import logging
 import random
 
-from homeassistant.util import dt as dt_util
-
 from homeassistant.core import callback
-from homeassistant.util import slugify
 from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
+from homeassistant.util import slugify
 
 from .const import DOMAIN, ICON, CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING, NAME_PREFIX
 from .entity import NoaaSpaceWeatherImageEntity
-
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -126,7 +124,7 @@ async def async_setup_entry(hass, entry, async_add_entities):
     try:
         products = [a.get("product", "") for a in animationmap if a.get("product")]
         if products:
-            hass.loop.create_task(
+            coordinator.animation_prefetch_task = hass.async_create_task(
                 coordinator.api.async_prefetch_animations(
                     products, concurrency=3, per_item_timeout=90.0
                 )
@@ -196,7 +194,7 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
             raise
         return image_bytes
 
-    async def _build_animation_with_jitter(self):
+    async def _build_animation_with_jitter(self, *, refresh: bool = False):
         try:
             try:
                 await asyncio.sleep(self._jitter)
@@ -204,10 +202,11 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
                 _LOGGER.debug("%s: background animation build cancelled", self.name)
                 return
             image_bytes = await self.coordinator.api.async_load_animation(
-                self.image_data["product"], bypass_cache=True
+                self.image_data["product"], bypass_cache=refresh
             )
-            self._set_cached(image_bytes)
-            self.async_write_ha_state()
+            if image_bytes:
+                self._set_cached(image_bytes)
+                self.async_write_ha_state()
             _LOGGER.debug(
                 "%s: background animation ready (size=%d)", self.name, len(image_bytes)
             )
@@ -216,15 +215,25 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         finally:
             self._build_task = None
 
-    def _schedule_build(self):
+    def _schedule_build(self, *, refresh: bool = False):
         if self._build_task and not self._build_task.done():
             _LOGGER.debug(
                 "%s: build already in progress; skipping new schedule", self.name
             )
             return
-        self._build_task = self.hass.loop.create_task(
-            self._build_animation_with_jitter()
+        self._build_task = self.hass.async_create_task(
+            self._build_animation_with_jitter(refresh=refresh)
         )
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Stop background work when this image entity is removed."""
+        if self._build_task and not self._build_task.done():
+            self._build_task.cancel()
+            try:
+                await self._build_task
+            except asyncio.CancelledError:
+                pass
+        await super().async_will_remove_from_hass()
 
     def _detect_mime(self, data: bytes) -> str:
         if len(data) >= 4:
@@ -237,6 +246,8 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
         return "application/octet-stream"
 
     def _set_cached(self, image_bytes: bytes) -> None:
+        if not image_bytes:
+            return
         self._raw_bytes = image_bytes
         self.image_last_updated = dt_util.utcnow()
         self._attr_image_last_updated = self.image_last_updated
@@ -247,9 +258,9 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
     @callback
     def _handle_coordinator_update(self):
-        self.image_last_updated = dt_util.utcnow()
-        self._attr_image_last_updated = self.image_last_updated
-        self._schedule_build()
+        # image_last_updated describes the bytes being served. A coordinator
+        # tick alone does not make those bytes newer; fetch a refreshed GIF.
+        self._schedule_build(refresh=True)
         self.async_write_ha_state()
 
     async def async_image(self):
@@ -265,7 +276,17 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
                         age,
                         self._min_refresh_seconds,
                     )
-                    return await self.async_update()
+                    try:
+                        refreshed = await self.async_update()
+                    except Exception:
+                        # Keep serving the last good frame/animation during an
+                        # upstream outage instead of breaking the image entity.
+                        _LOGGER.debug(
+                            "%s: serving stale animation after refresh failure",
+                            self.name,
+                        )
+                        return self._raw_bytes
+                    return refreshed or self._raw_bytes
                 else:
                     _LOGGER.debug(
                         "%s: image age %.1fs < %ss threshold; serving cached",
