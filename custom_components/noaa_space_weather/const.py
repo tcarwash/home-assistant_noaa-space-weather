@@ -26,11 +26,13 @@ PLATFORMS = [SENSOR, "image"]
 # Configuration and options
 CONF_ENABLED = "enabled"
 CONF_LEGACY_NAMING = "legacy_naming"
+CONF_ENABLE_ANIMATIONS = "enable_animations"
 NAME_PREFIX = "noaasw_"
 
 # Defaults
 DEFAULT_NAME = "NOAA Space Weather"
 DEFAULT_LEGACY_NAMING = False
+DEFAULT_ENABLE_ANIMATIONS = False
 
 
 STARTUP_MESSAGE = f"""

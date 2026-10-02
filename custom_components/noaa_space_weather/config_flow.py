@@ -8,7 +8,14 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 
-from .const import CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING, DEFAULT_NAME, DOMAIN
+from .const import (
+    CONF_ENABLE_ANIMATIONS,
+    CONF_LEGACY_NAMING,
+    DEFAULT_ENABLE_ANIMATIONS,
+    DEFAULT_LEGACY_NAMING,
+    DEFAULT_NAME,
+    DOMAIN,
+)
 
 
 class NoaaSpaceWeatherConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -28,13 +35,19 @@ class NoaaSpaceWeatherConfigFlow(ConfigFlow, domain=DOMAIN):
             options = {
                 CONF_LEGACY_NAMING: user_input.get(
                     CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
-                )
+                ),
+                CONF_ENABLE_ANIMATIONS: user_input.get(
+                    CONF_ENABLE_ANIMATIONS, DEFAULT_ENABLE_ANIMATIONS
+                ),
             }
             return self.async_create_entry(title=DEFAULT_NAME, data={}, options=options)
 
         schema = vol.Schema(
             {
                 vol.Optional(CONF_LEGACY_NAMING, default=DEFAULT_LEGACY_NAMING): bool,
+                vol.Optional(
+                    CONF_ENABLE_ANIMATIONS, default=DEFAULT_ENABLE_ANIMATIONS
+                ): bool,
             }
         )
         return self.async_show_form(
@@ -70,6 +83,12 @@ class NoaaSpaceWeatherOptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_LEGACY_NAMING,
                     default=self.config_entry.options.get(
                         CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING
+                    ),
+                ): bool,
+                vol.Optional(
+                    CONF_ENABLE_ANIMATIONS,
+                    default=self.config_entry.options.get(
+                        CONF_ENABLE_ANIMATIONS, DEFAULT_ENABLE_ANIMATIONS
                     ),
                 ): bool,
             }

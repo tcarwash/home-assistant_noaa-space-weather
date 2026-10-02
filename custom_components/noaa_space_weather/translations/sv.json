@@ -2,7 +2,11 @@
   "config": {
     "step": {
       "user": {
-        "description": "Om du behöver hjälp med konfigurationen, läs här: {documentation_url}"
+        "description": "Om du behöver hjälp med konfigurationen, läs här: {documentation_url}",
+        "data": {
+          "legacy_naming": "Use legacy entity names",
+          "enable_animations": "Enable animations"
+        }
       }
     },
     "error": {
@@ -14,9 +18,11 @@
   },
   "options": {
     "step": {
-      "user": {
+      "init": {
+        "description": "Building animations downloads and combines multiple frames, which can increase CPU usage. Turn this on to enable animated image entities; otherwise these entities show one current frame.",
         "data": {
-          "sensor": "Sensorn är aktiverad"
+          "legacy_naming": "Use legacy entity names",
+          "enable_animations": "Enable animations"
         }
       }
     }

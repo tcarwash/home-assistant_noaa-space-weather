@@ -9,7 +9,15 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 from homeassistant.util import slugify
 
-from .const import DOMAIN, ICON, CONF_LEGACY_NAMING, DEFAULT_LEGACY_NAMING, NAME_PREFIX
+from .const import (
+    CONF_ENABLE_ANIMATIONS,
+    CONF_LEGACY_NAMING,
+    DEFAULT_ENABLE_ANIMATIONS,
+    DEFAULT_LEGACY_NAMING,
+    DOMAIN,
+    ICON,
+    NAME_PREFIX,
+)
 from .entity import NoaaSpaceWeatherImageEntity
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -21,72 +29,72 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     animationmap = [
         {
-            "name": "Animated SUVI Secondary 284 Angstroms",
+            "name": "SUVI Secondary 284 Angstroms",
             "product": "/products/animations/suvi-secondary-284.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated SUVI Primary 171 Angstroms",
+            "name": "SUVI Primary 171 Angstroms",
             "product": "/products/animations/suvi-primary-171.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated SUVI Primary 304 Angstroms",
+            "name": "SUVI Primary 304 Angstroms",
             "product": "/products/animations/suvi-primary-304.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated SUVI Thematic Map",
+            "name": "SUVI Thematic Map",
             "product": "/products/animations/suvi-primary-map.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated WFS Ionosphere",
+            "name": "WFS Ionosphere",
             "product": "/products/animations/wam-ipe/wfs_ionosphere_new.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated Coronagraph CCOR1",
+            "name": "Coronagraph CCOR1",
             "product": "/products/animations/ccor1/ccor1.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated Geospace Magnetosphere Velocity",
+            "name": "Geospace Magnetosphere Velocity",
             "product": "/products/animations/geospace/velocity.json",
             "icon": "mdi:earth",
         },
         {
-            "name": "Animated Geospace Magnetosphere Density",
+            "name": "Geospace Magnetosphere Density",
             "product": "/products/animations/geospace/density.json",
             "icon": "mdi:earth",
         },
         {
-            "name": "Animated Geospace Magnetosphere Pressure",
+            "name": "Geospace Magnetosphere Pressure",
             "product": "/products/animations/geospace/pressure.json",
             "icon": "mdi:earth",
         },
         {
-            "name": "Animated Lasco C2",
+            "name": "Lasco C2",
             "product": "/products/animations/lasco-c2.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated Lasco C3",
+            "name": "Lasco C3",
             "product": "/products/animations/lasco-c3.json",
             "device_class": "animation",
         },
         {
-            "name": "Animated Aurora Forecast North",
+            "name": "Aurora Forecast North",
             "product": "/products/animations/ovation_north_24h.json",
             "icon": "mdi:aurora",
         },
         {
-            "name": "Animated Aurora Forecast South",
+            "name": "Aurora Forecast South",
             "product": "/products/animations/ovation_south_24h.json",
             "icon": "mdi:aurora",
         },
         {
-            "name": "Animated Geoelectric Field US-Canada",
+            "name": "Geoelectric Field US-Canada",
             "product": "/products/animations/geoelectric/US-Canada-1D.json",
             "icon": "mdi:earth",
         },
@@ -110,8 +118,13 @@ async def async_setup_entry(hass, entry, async_add_entities):
         },
     ]
 
+    animations_enabled = entry.options.get(
+        CONF_ENABLE_ANIMATIONS, DEFAULT_ENABLE_ANIMATIONS
+    )
     _LOGGER.info(
-        "Setting up %d images and %d animations", len(imagemap), len(animationmap)
+        "Setting up %d images and %d animations",
+        len(imagemap),
+        len(animationmap) if animations_enabled else 0,
     )
 
     entities = [
@@ -122,7 +135,11 @@ async def async_setup_entry(hass, entry, async_add_entities):
 
     # Kick off a background prefetch of all animations so they are ready shortly after setup
     try:
-        products = [a.get("product", "") for a in animationmap if a.get("product")]
+        products = (
+            [a.get("product", "") for a in animationmap if a.get("product")]
+            if animations_enabled
+            else []
+        )
         if products:
             coordinator.animation_prefetch_task = hass.async_create_task(
                 coordinator.api.async_prefetch_animations(
@@ -176,7 +193,10 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
                     self.image_data.get("product", "")
                 )
                 self._set_cached(image_bytes)
-                self._schedule_build()
+                if self.entry.options.get(
+                    CONF_ENABLE_ANIMATIONS, DEFAULT_ENABLE_ANIMATIONS
+                ):
+                    self._schedule_build()
             except Exception as err:  # pragma: no cover
                 _LOGGER.error("%s: initial animation fetch failed: %s", self.name, err)
                 raise
@@ -184,9 +204,16 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
 
         try:
             _LOGGER.debug("%s: refreshing full animation", self.name)
-            image_bytes = await self.coordinator.api.async_load_animation(
-                self.image_data.get("product", ""), bypass_cache=True
-            )
+            if self.entry.options.get(
+                CONF_ENABLE_ANIMATIONS, DEFAULT_ENABLE_ANIMATIONS
+            ):
+                image_bytes = await self.coordinator.api.async_load_animation(
+                    self.image_data.get("product", ""), bypass_cache=True
+                )
+            else:
+                image_bytes = await self.coordinator.api.async_get_first_frame(
+                    self.image_data.get("product", "")
+                )
             self._set_cached(image_bytes)
             self.async_write_ha_state()
         except Exception as err:  # pragma: no cover
@@ -260,7 +287,8 @@ class NoaaSpaceWeatherAnimation(NoaaSpaceWeatherImageEntity):
     def _handle_coordinator_update(self):
         # image_last_updated describes the bytes being served. A coordinator
         # tick alone does not make those bytes newer; fetch a refreshed GIF.
-        self._schedule_build(refresh=True)
+        if self.entry.options.get(CONF_ENABLE_ANIMATIONS, DEFAULT_ENABLE_ANIMATIONS):
+            self._schedule_build(refresh=True)
         self.async_write_ha_state()
 
     async def async_image(self):
